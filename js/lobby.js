@@ -1,3 +1,5 @@
+// requires chat.js
+
 /* MODEL */
 
 var playername;
@@ -17,12 +19,12 @@ var loc = "lobby";
 var popup = false;
 var kickingOut = false;
 
-function initialise() {
+function lobbyInitialise() {
     $.ajax({
          type: "GET",
          url: "onlinePlayers.php",
          data: {'function':'add'}
-        });
+    });
     playername = $('#usernameLabel').text();
     enableChatUpdate();
     enablePlayersUpdate();

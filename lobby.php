@@ -25,7 +25,7 @@ if (!isset($_SESSION['username'])) {
     </noscript>
 </head>
 
-<body onload="initialise()">
+<body onload="lobbyInitialise()">
 <div id="page">
 
 <div id="logoutScreen">
