@@ -443,17 +443,16 @@ function disablePlayersUpdate() {
 }
 
 function updatePlayersList(){
-    $.getJSON("onlinePlayers.php",
-        {
-         'function': 'load'
-        },
+    $.getJSON("onlinePlayers.php", {'function': 'getList'}, //aparently function:load is illegal???
         function(players){
             if (players != null){
                 displayPlayers(players);
-            } else {
+            }
+            else {
                 alert("Error on updating players");
             }
-    });
+        }
+    );
 }
 
 window.onbeforeunload = confirmExit;
