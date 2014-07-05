@@ -1,0 +1,30 @@
+[
+  {
+   "unitType":2,
+   "owner":1, 
+   "location":[4,4],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":2, 
+   "location":[5,4],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":3, 
+   "location":[5,5],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":4, 
+   "location":[4,5],
+   "state":"normal", 
+   "health": 10
+  }
+]

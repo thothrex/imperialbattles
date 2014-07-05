@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Front-End Test</title>
+        <meta charset="utf-8">
+
+        <script src="js/jquery-1.10.1.min.js"></script>
+        <script src="js/jquery.gamequery-0.7.1-patch1.js"></script>
+        <script src="js/utility.js"></script>
+        <script src="js/model.js"></script>
+        <script src="js/gview.js"></script>
+        <script src="js/gview-support.js"></script>
+        <script src="js/gview-units.js"></script>
+
+        <link rel="stylesheet" href="css/gview.css">
+
+        <script>
+        <!--
+            var model, view;
+
+            $(function () {
+                model = new Model(
+                    0,
+                    'frontend-server.php'
+                );
+
+                view = new GView(
+                    model,
+                    '#playground',
+                    {
+                        width:800,
+                        height:600,
+                        debug: true
+                    }
+                );
+
+                model.startGame();
+            });
+        -->
+        </script>
+
+        <style>
+            body {
+                background: #ddd;
+            }
+            #playground {
+                background: #fff;
+                border: 1px solid #000;
+                position: relative !important;
+                margin: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="playground"></div>
+    </body>
+</html>

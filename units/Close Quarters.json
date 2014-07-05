@@ -1,0 +1,87 @@
+[
+  {
+   "unitType":0,
+   "owner":1, 
+   "location": [5,7],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":1, 
+   "location": [6,8],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":1, 
+   "location": [6,7],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":2, 
+   "location": [16,7],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":2, 
+   "location": [19,7],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":2, 
+   "location": [17,11],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":3, 
+   "location": [4,18],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":3, 
+   "location": [6,15],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":3, 
+   "location": [9,16],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":4, 
+   "location": [16,17],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":4, 
+   "location": [17,14],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":4, 
+   "location": [18,15],
+   "state":"normal", 
+   "health": 10
+  }
+ 
+]

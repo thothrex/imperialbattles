@@ -1,0 +1,101 @@
+html 
+{
+    min-height:100%;
+    background: url('../img/bg.jpg') no-repeat center center fixed; 
+    -webkit-background-size: 100% 100%;
+    -moz-background-size: 100% 100%;
+    -o-background-size: 100% 100%;
+    background-size: 100% 100%;
+}
+
+body
+{
+    text-align:center;
+    min-height:100%;
+}
+
+input[type="text"],input[type="password"]
+{
+    width:200px;
+    display:block;
+    color:white;
+    background-color:#545454;
+    border:1px solid black;
+}
+
+.yellow
+{
+    color:yellow;
+    font-variant:small-caps;
+    font-weight:bold;
+    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+}
+
+.border
+{
+    border: 1px solid black;
+}
+
+#page
+{
+    position:relative;
+    margin:auto;
+    width:1600px;
+    height:800px;
+}
+
+#loginScreen
+{
+    position:absolute;
+    top:45%;
+    left:40%;
+    color:yellow;
+    font-variant:small-caps;
+    font-weight:bold;
+    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+	display:none;
+}
+
+#registerContainer, #forgotPassContainer
+{
+    display:none;
+}
+
+#loginStatusLabel, #registerStatusLabel, #forgotPassStatusLabel
+{
+    color:#FF4A36;
+    text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+}
+
+#images
+{
+    display:none;
+}
+
+div.popup
+{
+    display:none;
+    width: 50%;
+    position:absolute;
+    top:10%;
+    left:25%;
+    padding: 20px;
+    border: 1px solid black;
+    background-image: -moz-radial-gradient(center, circle farthest-side, #FFFFFF 30%, #96EE9A 100%);
+background-image: -webkit-gradient(radial, center center, 0, center center, 487, color-stop(0, #FFFFFF), color-stop(1, #96EE9A));
+    z-index:1000;
+	border-radius:4px;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+}
+
+#screenshots
+{
+    text-align:center;
+    width:600px;
+    position:relative;
+    top:380px;
+    left:32%;
+    display:none;
+}
+

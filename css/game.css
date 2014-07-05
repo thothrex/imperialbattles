@@ -1,0 +1,97 @@
+html 
+{
+    min-height:100%;
+    background: url('../img/bg.jpg') no-repeat center center fixed; 
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+body
+{
+    text-align:center;
+    min-height:100%;
+}
+
+.yellow
+{
+    color:yellow;
+    font-variant:small-caps;
+    font-weight:bold;
+    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+}
+
+.orange
+{
+    color:orange;
+    font-variant:small-caps;
+    font-weight:bold;
+    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+}
+
+#page
+{
+    position:relative;
+    margin:0 auto;
+    width:1600px;
+    height:800px;
+}
+
+#logoutScreen
+{
+    position:absolute;
+    right:15%;
+    border:2px solid black;
+    color:yellow;
+    font-variant:small-caps;
+    font-weight:bold;
+    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+    padding: 5px 10px;
+    background-color:#965912;
+}
+
+
+#gameScreen
+{
+  position: absolute;
+  top:5%;
+  left: 40%;
+}
+
+#buttons2
+{
+    position: absolute;
+    top: 93%;
+    left: 14%;
+} 
+
+#playground 
+{
+    background: #fff;
+    border: 1px solid #000;
+    margin: auto;
+}
+
+.green
+{
+ background:#96EE9A;
+	padding:8px 13px;
+	text-shadow: -1px 0 #fff, 0 1px #fff, 1px 0 #fff, 0 -1px #fff;
+	color:#000;
+	font-family:'Helvetica Neue',sans-serif;
+	font-size:17px;
+	font-weight:bold;
+	border-radius:4px;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	margin: 0px 0px;
+	border:2px solid #000000
+}
+
+#gameLabel {
+    height:21px;
+}
+
+
+

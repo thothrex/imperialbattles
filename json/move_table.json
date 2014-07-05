@@ -1,0 +1,22 @@
+[
+    { "unitType":0, "terrainType":0, "modifier":1 },
+    { "unitType":0, "terrainType":1, "modifier":1 },
+    { "unitType":0, "terrainType":2, "modifier":1 },
+    { "unitType":0, "terrainType":3, "modifier":1 },
+    { "unitType":0, "terrainType":5, "modifier":1 },
+    { "unitType":0, "terrainType":6, "modifier":1 },
+
+    { "unitType":1, "terrainType":0, "modifier":1 },
+    { "unitType":1, "terrainType":1, "modifier":1 },
+    { "unitType":1, "terrainType":2, "modifier":1 },
+    { "unitType":1, "terrainType":3, "modifier":1 },
+    { "unitType":1, "terrainType":5, "modifier":1 },
+    { "unitType":1, "terrainType":6, "modifier":1 },
+
+    { "unitType":2, "terrainType":0, "modifier":1 },
+    { "unitType":2, "terrainType":1, "modifier":1 },
+    { "unitType":2, "terrainType":2, "modifier":2 },
+    { "unitType":2, "terrainType":3, "modifier":2 },
+    { "unitType":2, "terrainType":5, "modifier":1 },
+    { "unitType":2, "terrainType":6, "modifier":1 }
+]

@@ -1,0 +1,217 @@
+html 
+{
+    min-height:100%;
+    background: url('../img/bg.jpg') no-repeat center center fixed; 
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+body
+{
+    text-align:center;
+    min-height:100%;
+}
+
+.yellow
+{
+    color:yellow;
+    font-variant:small-caps;
+    font-weight:bold;
+    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+}
+
+.orange
+{
+    color:orange;
+    font-variant:small-caps;
+    font-weight:bold;
+    text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
+}
+
+table.property
+{
+	position:relative;
+	top:-6px;
+}
+
+table.property  tr
+{
+    text-align:left;
+	vertical-align:top;
+}
+
+table.property th, table.property td
+{
+    padding:1px 0px 1px 30px;
+}
+
+div.box
+{
+    border:1px solid black;
+	padding:5px;
+	height:60px;
+}
+
+#page
+{
+    position:relative;
+    margin:0 auto;
+    width:1600px;
+    height:800px;
+}
+
+#gameSelectionScreen
+{
+    display:none;
+	position:absolute;
+	top:10%;
+	right:10%;
+}
+
+#logoutScreen
+{
+    position:absolute;
+    right:15%;
+    border:2px solid black;
+    color:yellow;
+    font-variant:small-caps;
+    font-weight:bold;
+    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+    padding: 5px 10px;
+    background-color:#965912;
+	display:none;
+}
+
+#serverBrowser
+{
+    position:absolute;
+	right:20%;
+	top:10%;
+}
+
+#serverList 
+{
+	overflow:auto;
+	height:500px;
+	width:500px;
+	border:2px solid black;
+	color:white;
+	font-weight:bold;
+    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+}
+
+#gameSetupScreen
+{
+    display:none;
+}
+
+#onlinePlayers
+{
+    position: absolute;
+    height: 70%; 
+    top: 19%;
+    left: 1%;
+    width: 7%; 
+    overflow: auto; 
+    border: 5px groove; 
+    padding: 2px; 
+    background: #8ea; 
+    font-weight:bold;
+}
+
+#onlinePlayersTable
+{
+    text-align:left;
+}
+
+#gameOptions
+{
+    position:absolute;
+    top:10%;
+    left:5%;
+    width: 60%;
+    height: 58%; 
+  background-image: -moz-radial-gradient(center, circle farthest-side, #96EE9A 0%, rgba(256,256,256, 0.5) 100%);
+background-image: -webkit-gradient(radial, center center, 0, center center, 487, color-stop(0, #96EE9A), color-stop(1, rgba(256,256,256, 0.5)));
+    font-weight:bold;
+}
+
+#optionsTable
+{
+    text-align:left;
+}
+
+#p3,#p4,#p5,#p6
+{
+    display:none;
+}
+
+#mapPreview
+{
+    position:absolute;
+    top:10%;
+    left:65%;
+    width: 30%;
+    height: 80%;
+}
+
+#mapImage
+{
+    margin:4%;
+    width: 90%;
+    height: 65%;
+    border:5px groove;
+    border-radius:10px;
+    box-shadow: 10px 10px 5px #777;
+    background-position:center center;
+    background-size:cover;
+}
+
+#headerMenu
+{
+    position:absolute;
+    right:40%;
+    border:2px solid black;
+  
+}
+
+.green
+{
+    background:#96EE9A;
+	padding:8px 13px;
+	text-shadow: -1px 0 #fff, 0 1px #fff, 1px 0 #fff, 0 -1px #fff;
+	color:#000;
+	font-family:'Helvetica Neue',sans-serif;
+	font-size:17px;
+	font-weight:bold;
+	border-radius:4px;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	margin: 0px 0px;
+	border:2px solid #000000
+}
+
+
+div.popup
+{
+    display:none;
+    width: 50%;
+    position:absolute;
+    top:10%;
+    left:25%;
+    padding: 20px;
+    border: 1px solid black;
+    background-image: -moz-radial-gradient(center, circle farthest-side, #FFFFFF 30%, #96EE9A 100%);
+background-image: -webkit-gradient(radial, center center, 0, center center, 487, color-stop(0, #FFFFFF), color-stop(1, #96EE9A));
+    z-index:1000;
+}
+
+#scoresTable 
+{
+    margin:auto;
+    border-collapse:collapse;
+    border-spacing:100px;
+    font-size:20px;
+}

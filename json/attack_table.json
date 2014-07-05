@@ -1,0 +1,11 @@
+[
+    { "attacker":0, "defender":0, "modifier":1.0 },
+    { "attacker":0, "defender":1, "modifier":1.0 },
+    { "attacker":0, "defender":2, "modifier":1.5 },
+    { "attacker":1, "defender":0, "modifier":1.7 },
+    { "attacker":1, "defender":1, "modifier":1.0 },
+    { "attacker":1, "defender":2, "modifier":0.75 },
+    { "attacker":2, "defender":0, "modifier":1.0 },
+    { "attacker":2, "defender":1, "modifier":2.0 },
+    { "attacker":2, "defender":2, "modifier":1.0 }
+]

@@ -1,0 +1,212 @@
+[
+  {
+   "unitType":0,
+   "owner":1, 
+   "location":[0,5],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":1, 
+   "location":[1,6],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":1, 
+   "location":[4,6],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":1, 
+   "location":[0,9],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":1, 
+   "location":[7,8],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":1, 
+   "location":[8,10],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":2, 
+   "location":[26,7],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":2, 
+   "location":[28,7],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":2, 
+   "location":[26,9],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":2, 
+   "location":[31,10],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":2, 
+   "location":[24,5],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":2, 
+   "location":[27,12],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":3, 
+   "location":[0,24],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":3, 
+   "location":[3,27],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":3, 
+   "location":[2,21],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":3, 
+   "location":[7,25],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":3, 
+   "location":[8,21],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":3, 
+   "location":[10,21],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":4, 
+   "location":[28,27],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":4, 
+   "location":[27,27],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":4, 
+   "location":[26,25],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":4, 
+   "location":[22,26],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":4, 
+   "location":[20,25],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":4, 
+   "location":[23,20],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":5, 
+   "location":[13,15],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":0,
+   "owner":5, 
+   "location":[17,13],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":5, 
+   "location":[18,17],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":1,
+   "owner":5, 
+   "location":[14,19],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":5, 
+   "location":[17,21],
+   "state":"normal", 
+   "health": 10
+  },
+  {
+   "unitType":2,
+   "owner":5, 
+   "location":[21,16],
+   "state":"normal", 
+   "health": 10
+  }
+]

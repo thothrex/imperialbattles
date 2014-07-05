@@ -1,0 +1,129 @@
+#mapGroup {
+    width: 100% !important;
+    height: 100% !important;
+    overflow: scroll !important;
+    background: #112;
+}
+
+#unitLayer  * {
+    position: absolute !important;
+    font-size: 10px;
+    font-weight: bold;
+}
+#unitLayer .owner {
+    text-align: center;
+    left:50%; top:-2px;
+    width: 100px;
+    margin-left: -50px;
+    display: none;
+}
+#unitLayer .sprite {
+    top: -2px;
+}
+#unitLayer .status {
+    top: 3px; right: 0px;
+}
+#unitLayer .health {
+    color: lime !important;
+}
+#unitLayer .damage {
+    color: red !important;
+    margin-top: 0px;
+}
+
+.hud {
+    position: absolute;
+    font-size: 14px;
+    font-weight: bold;
+    margin: 2px 18px 18px 2px;
+}
+#turnIndicator {
+    left: 0px; top: 0px;
+}
+#timeIndicator {
+    left: 0px; bottom: 0px;
+}
+#dayIndicator {
+    width: 100px;
+    margin-left: -50px;
+    left:50%; bottom:0px;
+    text-align: center;
+}
+#hudButtons {
+    right:0px; top: 0px;
+}
+#mouseTile {
+    right: 0px; bottom: 0px;
+}
+#statusIndicator {
+    left:50%; top:0px;
+    width:1000px; margin-left:-500px;
+    text-align: center;
+}
+
+#notify {
+    position: absolute;
+    font-size: 36px;
+    text-align: center;
+    width: 1000px;
+    margin: -18px 0 0 -500px;
+    left:50%; top:50%;
+}
+
+.popup {
+    position: absolute;
+    left:0px; top:0px;
+    width:100%; height:100%;
+    text-align: center;
+    display: table;
+}
+.popup > div {
+    display: table-cell;
+    vertical-align: middle;
+}
+.popup .background {
+    position: absolute;
+    left:0px; top:0px;
+    width:100%; height:100%;
+}
+.popup .text {
+    position: relative;
+    font-size: 36px;
+    text-shadow: black 1px 1px 0 !important;
+}
+.popup .buttons {
+    position: relative;
+    margin-top: 60px;
+}
+.popup .buttons button {
+    margin: 0 5px 0 5px;
+}
+
+.defeat .background {
+    background-color: #445;
+    opacity: 0;
+}
+.defeat .text {
+    color: white !important;
+}
+
+.victory .background {
+    background-color: #eec;
+    opacity: 0;
+}
+.victory .text {
+    color: white !important;
+}
+
+.yourTurn {
+    color: #ff0 !important;
+}
+.otherTurn {
+    color: white !important;
+}
+
+#unitLayer > *, .hud, #notify, .popup .text {
+    color: white;
+    font-family: Verdana, sans-serif;
+    text-shadow: black 1px 1px 0;
+}

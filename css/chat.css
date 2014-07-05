@@ -1,0 +1,52 @@
+#chatScreen
+{
+    position:absolute; 
+    top:10%; 
+    left:8%;
+    width:50%; 
+    height:100%;
+    display:none;
+}
+
+#chat-area                      
+{ 
+    top: 8%;
+    left: 9%;
+    width: 80%; 
+    position: absolute;
+    height: 65%; 
+    overflow: auto; 
+    border: 5px groove; 
+    padding: 2px; 
+    background: black; 
+    text-align: left;
+    vertical-align: bottom;
+}
+
+#chat-area p.normal                    
+{ 
+    color: #4e6;
+    height: 3px;
+    padding: 1px 10px;
+}
+
+p.red
+{
+    color: red;
+    height: 3px;
+    padding: 1px 10px;
+}
+
+#msg                        
+{ 
+    position:absolute;
+    left:9%;
+    top: 74%;
+    width:80%;
+    height:40px;
+    border: 5px inset; 
+    padding: 2px; 
+    font: 12px "Lucida Grande", Sans-Serif; 
+    resize:none;
+}
+
