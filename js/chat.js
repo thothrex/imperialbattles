@@ -18,12 +18,14 @@ function enableChatUpdate() {
                 if (messages.length>0){
                     lastfetched =  messages[messages.length-1].time;
                 }
-            } else {
+            }
+            else {
                 throw new Error("Error on fetching messages");
             }
             
             updateInterval = setInterval('updateChat()', 1000);
-    });
+        }
+    );
 }
 
 function updateChat() {

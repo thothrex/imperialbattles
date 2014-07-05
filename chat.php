@@ -15,14 +15,13 @@ if (isset($_REQUEST['function'])) {
     	
         case('fetch'):
     	    $gameID = filter_string($db_server, $_GET['gameid']);
-    	    $query = "SELECT * FROM 
-    	              (SELECT Time AS time,
-                            UserName AS username,
-                            Message AS message FROM Messages 
+            $query = "SELECT Time AS time,
+                             UserName AS username,
+                             Message AS message
+                      FROM Messages
     	              WHERE GameID = '$gameID'
-    	              ORDER BY Time DESC
-    	              LIMIT 60)
-    	              ORDER BY Time ASC";
+                      ORDER BY Time ASC
+                      LIMIT 60";
     	              
     	    $result = $db_server->query($query);
     	    if ($result) {
