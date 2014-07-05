@@ -10,27 +10,17 @@ if (!isset($_SESSION['username'])) {
 $db_server = db_connect();
 $username = $_SESSION['username'];
    
-$query = "SELECT GameID AS gameid,       GameName AS gamename,
-                 MapID AS mapid,         PlayersLimit AS playerslimit,
-                 NoPlayers AS noplayers, InProgress AS inprogress
-          FROM 
-(
-  (
-    (
-      SELECT GameID, GameName, MapID, PlayersLimit, NoPlayers, InProgress
-      FROM PlayersGames NATURAL JOIN Games 
-      WHERE UserName = '$username' AND InProgress = true
-    )
-    UNION
-    (
-      SELECT GameID, GameName, MapID, PlayersLimit, NoPlayers, InProgress
-      FROM Games 
-      WHERE InProgress = false AND HostName <> '$username' 
-        AND NoPlayers < PlayersLimit
-    )
-  )
-  NATURAL JOIN Maps
-) 
+$query =
+"SELECT Games.GameID AS gameid,GameName AS gamename,
+       MapName AS mapname,     PlayersLimit AS playerslimit,
+       NoPlayers AS noplayers, InProgress AS inprogress
+FROM PlayersGames
+     RIGHT JOIN Games ON PlayersGames.GameID = Games.GameID
+     NATURAL JOIN Maps
+WHERE (UserName = '$username' AND InProgress = true)
+   OR (InProgress = false
+       AND HostName <> '$username'
+       AND NoPlayers < PlayersLimit)
 ORDER BY InProgress DESC";
     	              
 $result = $db_server->query($query);

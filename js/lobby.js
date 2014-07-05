@@ -112,8 +112,9 @@ function updateGameBrowser() {
             $.each(result, function(i, field){
                 appendGame(field);
             }); 
-        showSelectedGame();
-        });
+            showSelectedGame();
+        }
+    );
 }
 
 function createGame() {
@@ -148,7 +149,7 @@ function updateGameSetup() {
             'lastUpdated': lastUpdated
         },
         function(result){
-            if (result.length >0) {
+            if (result.length > 0) {
                 setMapGamePlayers(result);
                 if (game.inprogress == "t") {
                     $.post("gameSetup.php",
@@ -566,8 +567,10 @@ function emptyContainer(container) {
 
 function appendGame(field) {
     var inprogress = (field.inprogress == 't') ? "IN PROGRESS" : "";
-    $("#serverList").append("<div id='g" + field.gameid +"' class='box' onclick=selectGame('g" 
-              + field.gameid + "','" + field.inprogress + "')><img src='img/"+ field.mapname 
+    $("#serverList").append(
+                "<div id='g" + field.gameid
+              +"' class='box' onclick=selectGame('g" + field.gameid + "','"
+              + field.inprogress + "')><img src='img/"+ field.mapname
               + ".png' alt='map' height='60px' width='60px' style='float:left;'/><table class='property'><tr><th>Name: </th><td>" 
               + field.gamename + "</td></tr><tr><th>Map:</th><td>" + field.mapname + "</td><td class='orange'> " 
               + inprogress + "</td></tr><tr><th>Players:</th><td>" + field.noplayers + " / " 
