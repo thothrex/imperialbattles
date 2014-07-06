@@ -5,11 +5,19 @@ require_once('config.php');
 if (isset($_POST['username']) && isset($_POST['password'])) {
     $db_server = db_connect();
 
-    $username = filter_string($db_server, $_POST['username']);
-    $password = filter_string($db_server, $_POST['password']);
+    $username = $_POST['username'];
+    $password = $_POST['password'];
 
-    $query = "SELECT * FROM Players WHERE UserName = '$username'";
-    $result = $db_server->query($query);
+    $db_server = db_connect();
+    $statement = $db_server->prepare("SELECT UserName, PwdHash
+                                      FROM Players
+                                      WHERE UserName = ?");
+    $statement->bind_param('s', $username);
+    if (!( $statement->execute() )) {
+        error_log('SQL Error in login.php', 3, 'debug.log');
+    }
+
+    $result = $statement->get_result(); $statement->close();
     if (!$result) {
         echo "Invalid username.";
     }
@@ -19,13 +27,17 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
     }        
     else {
         $row = $result->fetch_row(); $result->free();
-
-        if ($row[0] === $username && $row[1] === encrypt_password($password)) {
+        if ( $row[0] === $username && password_verify($password, $row[1]) ){
             $_SESSION['username'] = $username;
-            $query = "UPDATE Players 
-                      SET LoggedOn = true
-                      WHERE UserName = '$username'";
-            $result = $db_server->query($query);
+            $statement = $db_server->prepare("UPDATE Players
+                                              SET LoggedOn = true
+                                              WHERE UserName = ?");
+            $statement->bind_param('s', $username);
+            if (!( $statement->execute() )) {
+                error_log('SQL Error in login.php', 3, 'debug.log');
+            }
+
+            $result = $statement->get_result(); $statement->close();
             if (!$result) {
             }
             else {

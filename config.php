@@ -5,6 +5,7 @@ session_start();
 date_default_timezone_set('Europe/London');
 set_error_handler("php_sql_error");
 /* Creates a connection to the MySQL server. */
+require_once('lib/password.php'); //backports password_hash from PHP 5.5
 
 function db_connect() {
     $ini = parse_ini_file('privateInfo.ini'); //holds DB user/password etc.
@@ -26,13 +27,6 @@ function filter_string($db_server, $string) {
     if (get_magic_quotes_gpc())
         $string = stripslashes($string);
     return htmlentities(strip_tags($db_server->real_escape_string($string)));
-}
-
-/* Encrypts a password to be stored in the database. */
-function encrypt_password($password) {
-    $salt1 = 'jfyX56!';
-    $salt2 = 'hD&';
-    return hash('sha512', $salt1 . $password . $salt2);
 }
 
 function php_sql_error($errno, $errstr, $error_file, $error_line) {

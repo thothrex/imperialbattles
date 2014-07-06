@@ -2,28 +2,31 @@
 <?php
 require_once('config.php');
 
-if (isset($_POST['username']) 
-    && isset($_POST['password']) 
-    && isset($_POST['email'])) {
-    
+if (isset($_POST['username'])
+&&  isset($_POST['password'])
+&&  isset($_POST['email'])) {
+    $username = $_POST['username'];
+    $encrypted_pass = password_hash($_POST['password'], PASSWORD_DEFAULT);
+
     $db_server = db_connect();
-	
-    $username = filter_string($db_server, $_POST['username']);
-    $email = filter_string($db_server, $_POST['email']);
-    $password = filter_string($db_server, $_POST['password']);
-	
-    $encrypted_pass = encrypt_password($password);
-    $query = "INSERT INTO Players(UserName,Pass,Email)
-              VALUES('$username','$encrypted_pass','$email')";
-		
-    if (!$result = $db_server->query($query)) {
+    $statement
+        = $db_server->prepare("INSERT INTO Players(UserName,PwdHash,Email)
+                               VALUES(?,?,?)");
+    $statement->bind_param('sss',
+                           $username,
+                           $encrypted_pass,
+                           $_POST['email']);
+    if (!( $statement->execute() )) {
+        $registerError = $db_server->error;
+        error_log("\r\nregister.php error: $registerError", 3, 'debug.log');
         echo "false";
-    } else {
+    }
+    else {
         $_SESSION['username'] = $username;
         echo "true";
-        $result->free();
     }
 
+    $statement->close();
     $db_server->close();
 }
 
