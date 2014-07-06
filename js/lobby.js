@@ -11,6 +11,7 @@ var gameBrowserInterval;
 var gameSetupInterval;
 var scoresInterval;
 var onlinePlayersInterval;
+
 var maps;
 var colours = new Array("red","blue","green","white","yellow","cyan","black");
 var playercolours = new Array("red","blue","green","white","yellow","cyan","black");
@@ -446,8 +447,12 @@ function disablePlayersUpdate() {
 }
 
 function updatePlayersList(){
-    $.getJSON("onlinePlayers.php", {'function': 'getList'}, //aparently function:load is illegal???
-        function(players){
+    $.ajax({
+        dataType: "json",
+        url:      "onlinePlayers.php",
+        cache:     false,
+        data: {'function': 'getList'},
+        success: function(players){
             if (players != null){
                 displayPlayers(players);
             }
@@ -455,7 +460,7 @@ function updatePlayersList(){
                 alert("Error on updating players");
             }
         }
-    );
+    });
 }
 
 window.onbeforeunload = confirmExit;
