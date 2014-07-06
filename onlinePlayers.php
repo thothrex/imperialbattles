@@ -13,7 +13,6 @@ if (isset($_REQUEST['function'])) {
 
     switch($function) {
         case('getList'):
-            //error_log("\r\nLoading online players...", 3, "debug.log");
             $query = "SELECT UserName AS username
                       FROM Players
                       WHERE LoggedOn = true";
@@ -24,7 +23,8 @@ if (isset($_REQUEST['function'])) {
                 $result->free();
             }
             else {
-                //error_log("\tNo result!", 3, "debug.log");
+                $onlinePlayersError =  $result->error;
+                error_log("\r\nError: $onlinePlayersError", 3, "debug.log");
             }
             break;
 
