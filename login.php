@@ -35,6 +35,7 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
             $statement->bind_param('s', $username);
             if (!( $statement->execute() )) {
                 error_log('SQL Error in login.php', 3, 'debug.log');
+                $statement->close();
             }
 
             $result = $statement->get_result(); $statement->close();
