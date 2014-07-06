@@ -226,7 +226,8 @@ if (isset($_REQUEST['function'])) {
             //$db_server->begin_transaction(); requires PHP 5.5
             $db_server->autocommit(FALSE);
 
-            $query = "UPDATE Games SET NoPlayers = NoPlayers - 1, LastUpdated ='NOW()'
+            $query = "UPDATE Games
+                      SET NoPlayers = NoPlayers - 1, LastUpdated ='NOW()'
 			                WHERE GameID = '$gameID'";
             $db_server->query($query);
 
@@ -245,7 +246,8 @@ if (isset($_REQUEST['function'])) {
                 $gameAbandonError = $db_server->error;
                 error_log("Error: $gameAbandonError",3,'debug.log');
                 echo "failure";
-            } else {
+            }
+            else {
                 echo "success";
             } 
             break;
@@ -363,9 +365,9 @@ if (isset($_REQUEST['function'])) {
               $db_server->query($query);
             }
             else {
+              $returnedAtLeastOneRow = $result->num_rows < 1;
               $result->free();
-
-              if($result->num_rows < 1){
+              if($returnedAtLeastOneRow){
                 $query = "UPDATE PlayersGames 
                           SET Colour = '$colour', Team = '$team'
                           WHERE GameID = '$gameID' AND UserName = '$username'";
