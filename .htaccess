@@ -1,0 +1,4 @@
+<FilesMatch "privateInfo.ini|\.htaccess|\.log">
+order allow,deny
+deny from all
+</FilesMatch>
