@@ -172,10 +172,15 @@ if (isset($_REQUEST['function'])) {
                       WHERE GameID = '$gameID'";
             $result = $db_server->query($query);
             if(!$result){
+              $gameRetrieveError = $db_server->error;
+              error_log("\r\ngameSetup: retrieve error: $gameRetrieveError",
+                        3, "debug.log");
               echo json_encode(false);
               break;
             }
             else if($result->num_rows < 1){
+              error_log("\r\ngameSetup: retrieve error: no such game exists",
+                        3, "debug.log");
               echo json_encode(false);
               $result->free();
               break;
@@ -196,6 +201,9 @@ if (isset($_REQUEST['function'])) {
 					 
             $result = $db_server->query($query);
             if(!$result){
+              $gameRetrieveError = $db_server->error;
+              error_log("\r\ngameSetup: retrieve error: $gameRetrieveError",
+                        3, "debug.log");
               echo json_encode(true); //true means client is up-to-date (or SQL error)
               break;
             }
@@ -234,6 +242,8 @@ if (isset($_REQUEST['function'])) {
 					        
             $result = $db_server->commit(); $db_server->autocommit(TRUE);
             if (!$result) {
+                $gameAbandonError = $db_server->error;
+                error_log("Error: $gameAbandonError",3,'debug.log');
                 echo "failure";
             } else {
                 echo "success";
