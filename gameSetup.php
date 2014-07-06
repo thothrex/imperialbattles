@@ -14,7 +14,11 @@ if (isset($_REQUEST['function'])) {
     switch($function) {
     	
         case('loadmaps'):
-            $query = "SELECT MapID,MapName,MaxPlayers FROM Maps";
+            $query =
+            "SELECT MapID AS mapid,
+                    MapName AS mapname,
+                    MaxPlayers AS maxplayers
+             FROM Maps";
     	              
             $result = $db_server->query($query); 
             if ($result) {
@@ -29,7 +33,7 @@ if (isset($_REQUEST['function'])) {
             $gamename = filter_string($db_server, $_GET['gamename']);
             $map = filter_string($db_server, $_GET['map']);
             
-            $query = "SELECT MaxPlayers
+            $query = "SELECT MaxPlayers AS maxplayers
                       FROM Maps
                       WHERE MapID = '$map'";
 
@@ -46,7 +50,7 @@ if (isset($_REQUEST['function'])) {
                 echo json_encode(false); break;
             } 
             //else
-            $query = "SELECT GameID
+            $query = "SELECT GameID AS gameid
                       FROM Games
                       WHERE GameName = '" . $gamename . 
                       "' AND HostName = '" . $username . "'";
@@ -66,11 +70,11 @@ if (isset($_REQUEST['function'])) {
             }
 			
             $query = 
-              "SELECT GameID AS gameid,           MapID AS mapid, 
+              "SELECT GameID AS gameid,           MapID AS mapid,
                       MapName AS mapname,         MaxPlayers AS maxplayers,
                       Width AS width,             Height AS height,
                       GameName AS gamename,       PlayersLimit AS playerslimit,
-		                  TurnTimeout AS turntimeout, HostName AS hostname, 
+		                  TurnTimeout AS turntimeout, HostName AS hostname,
                       LastUpdated AS lastupdated, UserName AS username,
                       Colour AS colour,           Team AS team,
                       Ready AS ready
@@ -141,8 +145,14 @@ if (isset($_REQUEST['function'])) {
         case ('initialRetrieve'):
             $gameID = filter_string($db_server, $_GET['gameid']);
 			
-            $query = "SELECT GameID,MapID,MapName,MaxPlayers,Width,Height,GameName,PlayersLimit,
-		                  TurnTimeout,HostName,InProgress,LastUpdated,UserName,Colour,Team,Ready
+            $query = "SELECT GameID AS gameid,    MapID AS mapid,
+                      MapName AS mapname,         MaxPlayers AS maxplayers,
+                      Width AS width,             Height AS height,
+                      GameName AS gamename,       PlayersLimit AS playerslimit,
+                      TurnTimeout AS turntimeout, HostName AS hostname,
+                      LastUpdated AS lastupdated, UserName AS username,
+                      Colour AS colour,           Team AS team,
+                      Ready AS ready,             InProgress AS inprogress
                       FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
 			                WHERE GameID = '$gameID' ORDER BY SeqNo ASC";
 					 
