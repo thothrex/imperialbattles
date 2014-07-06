@@ -87,19 +87,6 @@ if (isset($_REQUEST['function'])) {
               $result->free();
             }            
             break;
-            
-        case('delete'):
-            $gameID = filter_string($db_server, $_POST['gameid']);;
-
-            $query = "DELETE FROM Games 
-                      WHERE GameID='$gameID'";
-
-            if (!$result = $db_server->query($query)) {
-              echo "failure";
-            } else {
-              echo "success";
-            }
-            break;
 
         case ('join'):
             
@@ -250,6 +237,32 @@ if (isset($_REQUEST['function'])) {
             else {
                 echo "success";
             } 
+            break;
+
+        case('delete'):
+            $gameID = filter_string($db_server, $_POST['gameid']);
+
+            //$db_server->begin_transaction(); requires PHP 5.5
+            $db_server->autocommit(FALSE);
+
+            $query = "DELETE FROM Games
+                      WHERE GameID = '$gameID'";
+            $db_server->query($query);
+
+            $query = "DELETE FROM PlayersGames
+                      WHERE GameID = '$gameID'";
+            $db_server->query($query);
+
+            $result = $db_server->commit(); $db_server->autocommit(TRUE);
+
+            if (!$result) {
+              $gameDeletionError = $db_server->error;
+              error_log("Error: $gameDeletionError",3,'debug.log');
+              echo "failure";
+            }
+            else {
+              echo "success";
+            }
             break;
           
          case('removePlayer'):
