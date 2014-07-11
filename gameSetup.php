@@ -47,7 +47,11 @@ if (isset($_REQUEST['function'])) {
 
             $result = $db_server->query($query);
             if (!$result) {
-                echo json_encode(false); break;
+                $gameCreateError = $db_server->error;
+                error_log("\r\ngameSetup - (first) create error: $gameCreateError",
+                        3, "debug.log");
+                echo json_encode(false);
+                break;
             } 
             //else
             $query = "SELECT GameID AS gameid
@@ -56,7 +60,11 @@ if (isset($_REQUEST['function'])) {
                       "' AND HostName = '" . $username . "'";
             $result = $db_server->query($query);
             if (!$result) {
-                echo json_encode(false); break;
+                $gameCreateError = $db_server->error;
+                error_log("\r\ngameSetup - (second) create error: $gameCreateError",
+                        3, "debug.log");
+                echo json_encode(false);
+                break;
             }
             
             $row = $result->fetch_row(); $result->free();
@@ -66,7 +74,11 @@ if (isset($_REQUEST['function'])) {
                       VALUES('$username','$gameID','red', true)";  
 
             if (!$result = $db_server->query($query)) {
-                echo json_encode(false); break;
+                $gameCreateError = $db_server->error;
+                error_log("\r\ngameSetup - (third) create error: $gameCreateError",
+                        3, "debug.log");
+                echo json_encode(false);
+                break;
             }
 			
             $query = 
@@ -78,18 +90,24 @@ if (isset($_REQUEST['function'])) {
                       LastUpdated AS lastupdated, UserName AS username,
                       Colour AS colour,           Team AS team,
                       Ready AS ready
-                      FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
-			                WHERE GameID = '$gameID' ORDER BY SeqNo ASC";
-					 
-  			    $result = $db_server->query($query);
-      	    if ($result) {
+              FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
+              WHERE GameID = '$gameID'
+              ORDER BY SeqNo ASC";
+
+            $result = $db_server->query($query);
+            if (!$result) {
+              $gameCreateError = $db_server->error;
+              error_log("\r\ngameSetup - (fourth) create error: $gameCreateError",
+                      3, "debug.log");
+              echo json_encode(false);
+            }
+            else {
               echo sqlresult_to_json($result);
               $result->free();
-            }            
+            }
             break;
 
         case ('join'):
-            
             $gameid = filter_string($db_server, $_POST['gameid']);
             $username = filter_string($db_server, $_SESSION['username']);
 			
@@ -98,12 +116,18 @@ if (isset($_REQUEST['function'])) {
                       WHERE GameID = '$gameid'";
             $result = $db_server->query($query);
             if (!$result){
+              $gameJoinError = $db_server->error;
+              error_log("\r\ngameSetup?function=join error: $gameJoinError",
+                    3, "debug.log");
               echo "failure";
               break;
             }
 
             $row = $result->fetch_row(); $result->free();
             if ($row[0] >= $row[1]){
+              $gameJoinError = $db_server->error;
+              error_log("\r\ngameSetup?function=join error: $gameJoinError",
+                    3, "debug.log");
               echo "failure";
               break;
             }
@@ -123,6 +147,9 @@ if (isset($_REQUEST['function'])) {
             $result = $db_server->commit(); $db_server->autocommit(TRUE);
 					        
             if (!$result) {
+                $gameJoinError = $db_server->error;
+                error_log("\r\ngameSetup?function=join error: $gameJoinError",
+                      3, "debug.log");
                 echo "failure";
             } else {
                 echo "success";
@@ -166,7 +193,7 @@ if (isset($_REQUEST['function'])) {
               break;
             }
             else if($result->num_rows < 1){
-              error_log("\r\ngameSetup: retrieve error: no such game exists",
+              error_log("\r\ngameSetup: retrieve error: no game with ID $gameID exists",
                         3, "debug.log");
               echo json_encode(false);
               $result->free();
@@ -231,7 +258,8 @@ if (isset($_REQUEST['function'])) {
             $result = $db_server->commit(); $db_server->autocommit(TRUE);
             if (!$result) {
                 $gameAbandonError = $db_server->error;
-                error_log("Error: $gameAbandonError",3,'debug.log');
+                error_log("gameSetup.php?function=abandon error:
+                           $gameAbandonError",3,'debug.log');
                 echo "failure";
             }
             else {
