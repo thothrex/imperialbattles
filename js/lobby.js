@@ -184,10 +184,14 @@ function deleteGame() {
             'gameid' : game.gameid
         },
         function(data) {
-            if (!data.match("success")) {
-                alert("Error on canceling game");
-            } else {
+            if (data === 'success'){
                 switchToGameSelection();
+            }
+            else if (data === 'failure') {
+                alert("gameSetup.php?function=delete failed");
+            }
+            else {
+                alert("deleteGame error: received " + data);
             }
         });
 }
@@ -201,8 +205,14 @@ function joinGame() {
           gameid: gameid
         },
         function(data) {
-            if (data.match("success")) {
+            if (data === 'success') {
                switchToClientGameSetup(gameid);
+            }
+            else if (data === 'failure'){
+                console.error("gameSetup.php:join failed (properly)");
+            }
+            else {
+                console.error("gameSetup.php:join failed (improperly)");
             }
         });
     }
@@ -216,8 +226,11 @@ function abandonGame() {
          'gameid' : game.gameid
         },
         function(data) {
-            if (data.match("success")) {
+            if (data === 'success'){
                switchToGameSelection();
+            }
+            else if (data === 'failure'){
+                console.log("gameSetup.php:abandon failed");
             }
         }); 
 }
@@ -341,7 +354,7 @@ function removePlayer(username){
           },
           function(data) {
               if (!data.match("success"))
-                alert("Error On kicking Player");
+                alert("Error On kicking Player: " + data);
               kickingOut = false;
           }).fail(function(data){kickingOut = false;
           });
