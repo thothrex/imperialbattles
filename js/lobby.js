@@ -133,7 +133,8 @@ function createGame() {
                         lastUpdated = result[0].lastupdated;
                         setMapGamePlayers(result);
                         switchToHostGameSetup();
-                    } else {
+                    }
+                    else {
                         alert("A game with name '" + gamename + "' already exists");
                     }
                 });
@@ -163,14 +164,17 @@ function updateGameSetup() {
                             $("#startGameForm").submit();
                         });
                 }
+
                 if(isStillInGame()){
                     lastUpdated = result[0].lastupdated;
                     updateSetupView();
-                } else {
+                }
+                else {
                     alert("You have been kicked out of the game");
                     switchToGameSelection();
                 }
-            } else if (!result && loc == "client") {
+            }
+            else if (!result && loc == "client") {
                 alert("The game has been canceled");
                 switchToGameSelection();
             }

@@ -30,24 +30,24 @@ function enableChatUpdate() {
 
 function updateChat() {
     if (!updating){
-    updating = true;
-    $.getJSON("chat.php",
-        {  
-            'function': 'update',
-            'timestamp':lastfetched,
-			'gameid': game.gameid
-        },
-        function(messages){ 
-            if (messages != null){
-                if (messages.length>0){
-                    lastfetched = messages[messages.length-1].time;
-                    displayMessages(messages);
+        updating = true;
+        $.getJSON("chat.php",
+            {
+                'function' : 'update',
+                'timestamp': lastfetched,
+                'gameid'   : game.gameid
+            },
+            function(messages){
+                if (messages != null){
+                    if (messages.length>0){
+                        lastfetched = messages[messages.length-1].time;
+                        displayMessages(messages);
+                    }
                 }
-            } 
-            updating = false;
-    });
+                updating = false;
+            }
+        );
     }
-    
 }
 
 function sendMessage() {
@@ -64,7 +64,8 @@ function sendMessage() {
             if (data!=null) {
                 updateChat();
                 moveScrollbarToBottom();
-            } else {
+            }
+            else {
                 alert("Error on sending message");
             }
         });

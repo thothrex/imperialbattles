@@ -5,7 +5,8 @@ function initialise() {
         document.forms["loginForm"]["username"].value = $.cookie("user");
         document.forms["loginForm"]["password"].value = $.cookie("pass");
         login();
-    } else {
+    }
+    else {
         $("#images").fadeIn();
         $("#loginScreen").fadeIn();
         $("#screenshots").fadeIn();

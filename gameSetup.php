@@ -59,8 +59,8 @@ if (isset($_REQUEST['function'])) {
             //else
             $query = "SELECT GameID AS gameid
                       FROM Games
-                      WHERE GameName = '" . $gamename . 
-                      "' AND HostName = '" . $username . "'";
+                      WHERE GameName = '$gamename'
+                      AND HostName = '$username'";
             $result = $db_server->query($query);
             if (!$result) {
                 $gameCreateError = $db_server->error;
@@ -156,7 +156,8 @@ if (isset($_REQUEST['function'])) {
                 error_log("\r\ngameSetup?function=join error: $gameJoinError",
                       3, "debug.log");
                 echo "failure";
-            } else {
+            }
+            else {
                 echo "success";
             } 
             break;
@@ -254,7 +255,7 @@ if (isset($_REQUEST['function'])) {
 			      $query = "UPDATE PlayersGames SET SeqNo = SeqNo -1
 			                WHERE GameID = '$gameID' 
 			                    AND SeqNo > (SELECT SeqNo FROM PlayersGames
-			                              WHERE Username = '$username' AND GameID ='$gameID')";
+			                              WHERE Username = '$username' AND GameID = '$gameID')";
             $db_server->query($query);
 
             $query = "DELETE FROM PlayersGames
