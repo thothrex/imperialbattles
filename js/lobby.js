@@ -15,7 +15,7 @@ var onlinePlayersInterval;
 var maps;
 var colours = new Array("red","blue","green","white","yellow","cyan","black");
 var playercolours = new Array("red","blue","green","white","yellow","cyan","black");
-var lastUpdated;
+var lastUpdated; //ISO datetime string
 var loc = "lobby";
 var popup = false;
 var kickingOut = false;

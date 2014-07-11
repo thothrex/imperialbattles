@@ -41,9 +41,12 @@ if (isset($_REQUEST['function'])) {
             $playerslimit = $result->fetch_row(); 
             $playerslimit = $playerslimit[0];
             $result->free();
+            $curTime      = isoNow();
 
-            $query = "INSERT INTO Games(GameName,MapID,PlayersLimit,HostName,LastUpdated, InProgress)
-                      VALUES('$gamename','$map','$playerslimit','$username','time()', false)";
+            $query = "INSERT INTO Games(GameName,MapID,PlayersLimit,
+                                        HostName,LastUpdated, InProgress)
+                      VALUES('$gamename','$map','$playerslimit',
+                             '$username', '$curTime', false)";
 
             $result = $db_server->query($query);
             if (!$result) {
@@ -140,7 +143,9 @@ if (isset($_REQUEST['function'])) {
                       VALUES('$username','$gameid','$seqno')";
             $db_server->query($query);
 
-            $query = "UPDATE Games SET NoPlayers = NoPlayers + 1 
+            $curTime = isoNow();
+            $query = "UPDATE Games
+                      SET NoPlayers = NoPlayers + 1, LastUpdated = '$curTime'
                       WHERE GameID = '$gameid'";
             $db_server->query($query);
 
@@ -240,8 +245,9 @@ if (isset($_REQUEST['function'])) {
             //$db_server->begin_transaction(); requires PHP 5.5
             $db_server->autocommit(FALSE);
 
+            $curTime = isoNow();
             $query = "UPDATE Games
-                      SET NoPlayers = NoPlayers - 1, LastUpdated ='NOW()'
+                      SET NoPlayers = NoPlayers - 1, LastUpdated = '$curTime'
 			                WHERE GameID = '$gameID'";
             $db_server->query($query);
 
@@ -333,7 +339,9 @@ if (isset($_REQUEST['function'])) {
 			                WHERE UserName = '$username' and GameID = '$gameID'";
             $db_server->query($query);
 
-            $query = "UPDATE Games SET NoPlayers = NoPlayers - 1, LastUpdated ='NOW()'
+            $curTime = isoNow();
+            $query = "UPDATE Games
+                      SET NoPlayers = NoPlayers - 1, LastUpdated = '$curTime'
 			                WHERE GameID = '$gameID'";
             $db_server->query($query);
 
@@ -369,9 +377,12 @@ if (isset($_REQUEST['function'])) {
               break;
             }
                       
+            $curTime = isoNow();
             $query = "UPDATE Games 
-                      SET MapID = '$mapID', PlayersLimit = '$playersLimit',
-                          TurnTimeout = '$turnTimeout', LastUpdated = 'NOW()'
+                      SET MapID = '$mapID',
+                          PlayersLimit = '$playersLimit',
+                          TurnTimeout = '$turnTimeout',
+                          LastUpdated = '$curTime'
                       WHERE GameID = '$gameID'";
 
             if (!$result = $db_server->query($query)) {
@@ -395,7 +406,8 @@ if (isset($_REQUEST['function'])) {
             //$db_server->begin_transaction(); requires PHP 5.5
             $db_server->autocommit(FALSE);
 
-            $query = "UPDATE Games SET LastUpdated ='NOW()'
+            $curTime = isoNow();
+            $query = "UPDATE Games SET LastUpdated ='$curTime'
                       WHERE GameID = '$gameID'";
             $db_server->query($query);
 
@@ -436,7 +448,8 @@ if (isset($_REQUEST['function'])) {
             //$db_server->begin_transaction(); requires PHP 5.5
             $db_server->autocommit(FALSE);
 
-            $query = "UPDATE Games SET LastUpdated ='NOW()'
+            $curTime = isoNow();
+            $query = "UPDATE Games SET LastUpdated ='curTime'
 			                WHERE GameID = '$gameID'";
             $db_server->query($query);
 

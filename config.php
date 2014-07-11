@@ -31,7 +31,7 @@ function filter_string($db_server, $string) {
 
 function php_sql_error($errno, $errstr, $error_file, $error_line) {
     $file = fopen("error.log","a");
-    $error = date("d-m-y H:i:s") . " [$errno] '$errstr' in file: $error_file on line: $error_line\n";
+    $error = isoNow() . " [$errno] '$errstr' in file: $error_file on line: $error_line\n";
     fwrite($file,$error);
     fclose($file);
 }
@@ -50,6 +50,10 @@ function sqlresult_to_json($result) {
     }
 
     return json_encode($rows);
+}
+
+function isoNow(){
+    return date('Y-m-d\TH:i:s');
 }
 
 ?>
