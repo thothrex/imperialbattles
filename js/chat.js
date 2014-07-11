@@ -35,7 +35,8 @@ function updateChat() {
             {
                 'function' : 'update',
                 'timestamp': lastfetched,
-                'gameid'   : game.gameid
+                'gameid'   : game.gameid,
+                cache      : false
             },
             function(messages){
                 if (messages != null){
