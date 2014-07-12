@@ -1,6 +1,8 @@
 #!/usr/bin/php
 <?php
 require_once('config.php');
+require_once('time.php');
+// requires DBH to be throwing exceptions on error
 
 function areAdjacent($x1,$y1,$x2,$y2){
     $dx = abs($x1-$x2);
@@ -8,28 +10,44 @@ function areAdjacent($x1,$y1,$x2,$y2){
     return (($dx<=1) && ($dy<=1));
 }
 
-function checkPlayerDefeated($db_server,$gameID,$unitID){
-    $query = "SELECT SeqNo FROM Units
-              WHERE UnitID = '$unitID'";
-    $result = $db_server->query($query);
-    if (!$result){
+function checkPlayerDefeated($dbh, $gameID, $unitID){
+    $sth = $dbh->prepare(
+       "SELECT SeqNo
+        FROM   Units
+        WHERE  UnitID = ?"
+    );
+    $sth->execute([$unitID]);
+
+    $row = $sth->fetch();
+    if (!$row) {
+        //error no such unit
         return;
     }
-    $row = $result->fetch_row(); $result->free();
     $seqNo = $row[0];
-    $query = "SELECT COUNT(UnitID) FROM UNITS
-              WHERE SeqNo = '$seqNo' AND GameID = '$gameID'";
-    $result = $db_server->query($query);
-    if (!$result){
-        return;
-    }
-    $row = $result->fetch_row(); $result->free();
+    $sth = $dbh->prepare(
+       "SELECT COUNT(UnitID)
+        FROM   UNITS
+        WHERE  SeqNo = ? AND GameID = ?"
+    );
+    $sth->execute([$seqNo,$gameID]);
+
+    $row = $sth->fetch();
     if ($row[0] <= 1){
-      $query = "UPDATE PlayersGames 
-                SET Alive = false
-                WHERE SeqNo = '$seqNo' AND GameID = '$gameID'";
-      $result = $db_server->query($query); $result->free();
-    }   
+        $sth = $dbh->prepare(
+           "UPDATE PlayersGames
+            SET    Alive = false
+            WHERE  SeqNo = ? AND GameID = ?"
+        );
+        $sth->execute([$seqNo,$gameID]);
+    }
+}
+
+function clearUpdates($dbh, $gameid, $username){
+    $sth = $dbh->prepare(
+       "DELETE FROM Updates
+        WHERE GameID = ? AND Username = ?"
+    );
+    $sth->execute([$gameid,$username]);
 }
 
 if (!isset($_SESSION['username'])) {
@@ -37,696 +55,685 @@ if (!isset($_SESSION['username'])) {
 }
 
 if (isset($_REQUEST['function'])) {
-    $db_server = db_connect();
-    $function = filter_string($db_server, $_REQUEST['function']);
+    $dbh      = db_connect();
+    $function = $_REQUEST['function'];
 
     switch($function) {
     	
         case('start'):
-            $gameid = filter_string($db_server, $_POST['gameid']);
+            $gameid = $_POST['gameid'];
 
-            $query = "SELECT NoPlayers,MapID
-                      FROM Games
-                      WHERE GameID = '$gameid'";
-            $result = $db_server->query($query); 
-            $row = $result->fetch_row(); $result->free();
-            $noplayers = $row[0];
-            $mapid = $row[1];
-
-            $query = "BEGIN;
-                      UPDATE Games
-                      SET InProgress = true, Day = '1', Turn = '1', LastUpdated = 'NOW()'
-                      WHERE GameID = '$gameid';
-                      INSERT INTO Units(GameID,SeqNo,UnitType,Xloc,Yloc,State,Health)
-                          SELECT '$gameid',SeqNo,UnitType,Xloc,Yloc,State,Health
-                          FROM InitialUnits
-                          WHERE MapID = '$mapid' and SeqNo <= '$noplayers';
-                      COMMIT;";
-
-            if ($result = $db_server->query($query)) {
-                echo json_encode("success");
-                $result->free();
-            } else {
+            $sth = $dbh->prepare(
+               "SELECT NoPlayers, MapID
+                FROM   Games
+                WHERE  GameID = ?"
+            );
+            $sth->execute([$gameid]);
+            $row = $sth->fetch();
+            if(!$row) {
+                //error - no such game
                 echo json_encode("failure");
+                break;
             }
+            $noplayers = $row[0];
+            $mapid     = $row[1];
+            $curTime   = isoNow();
 
+            $dbh->beginTransaction(); // -----------------------------
+            $sth = $dbh->prepare(
+               "UPDATE Games
+                SET    InProgress  = true, Day = '1',
+                       LastUpdated = ?,    Turn = '1'
+                WHERE  GameID = ?"
+            );
+            $sth->execute([$curTime, $gameid]);
+            $sth = $dbh->prepare(
+               "INSERT INTO Units
+                       (GameID,SeqNo,UnitType,Xloc,Yloc,State,Health)
+                SELECT       ?,SeqNo,UnitType,Xloc,Yloc,State,Health
+                FROM  InitialUnits
+                WHERE MapID = ? and SeqNo <= ?"
+            );
+            $sth->execute([$gameid, $mapid, $noplayers]);
+            $dbh->commit(); // -----------------------------
+
+            echo json_encode("success");
             break;
 
         case('resume'):
-            $gameid = filter_string($db_server, $_REQUEST['gameid']);
+            $gameid   = $_REQUEST['gameid'];
             $username = $_SESSION['username'];
 
-            $query = "SELECT MapName,Width,Height,GameID,GameName,TurnTimeout,
-                      SeqNo,Turn, EXTRACT(EPOCH FROM (NOW() - LastUpdated)), Day
-                      FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
-                      WHERE GameID = '$gameid' and UserName = '$username'";
-            $result = $db_server->query($query); 
-            if (!$result) {
+            $sth = $dbh->prepare(
+               "SELECT MapName,     Width, Height, GameID, GameName,
+                       TurnTimeout, SeqNo, Turn,   LastUpdated, Day
+                FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
+                WHERE GameID = ? and UserName = ?"
+            );
+            $result = $sth->execute([$gameid,$username]);
+
+            $row = $sth->fetch();
+            if (!$row) {
                 echo json_encode("failure");
-            } else {
-                $row = $result->fetch_row(); $result->free();
+                //error
+                break;
+            }
+            $timeSinceLastUpdate = timeSub(isoNow(), $row[8]);
+            $turnTimeLeft        = intVal($row[5]) - $timeSinceLastUpdate;
+            $map = array(
+                'mapname'         => "map/" . $row[0] . ".json",
+                'width'           => intVal($row[1]),
+                'height'          => intVal($row[2])
+            );
+            $game = array(
+                'gameid'          => $row[3],
+                'gamename'        => $row[4],
+                'turntimeout'     => intVal($row[5]),
+                'localplayer'     => intVal($row[6]),
+                'currentplayer'   => intVal($row[7]),
+                'currenttimeleft' => $turnTimeLeft,
+                'day'             => intVal($row[9])
+            );
 
-                $map = array('mapname' => "map/" . $row[0] . ".json", 'width' => intVal($row[1]), 
-                                'height' => intVal($row[2]));
-                $game = array('gameid' => $row[3], 'gamename' => $row[4],
-                 'turntimeout' => intVal($row[5]), 'localplayer' => intVal($row[6]),
-                 'currentplayer' => intVal($row[7]), 'currenttimeleft' => intVal($row[5])-intVal($row[8]),
-                  'day' => intVal($row[9]));
+            $sth = $dbh->prepare(
+               "SELECT   UserName,Colour,Team,SeqNo,Alive
+                FROM     PlayersGames
+                WHERE    GameID = ?
+                ORDER BY SeqNo ASC"
+            );
+            $sth->execute([$gameid]);
 
-                $query = "SELECT UserName,Colour,Team,SeqNo,Alive
-                          FROM PlayersGames
-                          WHERE GameID = '$gameid'
-                          ORDER BY SeqNo ASC";
-                $result = $db_server->query($query); 
-                if (!$result) {
-                    echo json_encode("failure");
-                    return;
-                } else {
-                    $players = array();
-                    while($r = $result->fetch_assoc()) {
-                        $players[] = $r;
-                    }
-                    $result->free();
+            $players = $sth->fetchAll();
+            if (!$players || count($players === 0)) {
+                echo json_encode("failure");
+                //error - no such game or no players
+                break;
+            }
 
-                    $query = "SELECT SeqNo,UnitType,Xloc,Yloc,State,Health
-                              FROM Units
-                              WHERE GameID = '$gameid'";
+            $sth = $dbh->prepare(
+               "SELECT SeqNo,UnitType,Xloc,Yloc,State,Health
+                FROM   Units
+                WHERE  GameID = ?"
+            );
+            $sth->execute([$gameid]);
 
-                    $result = $db_server->query($query);
-                    if (!$result) {
-                        echo json_encode("failure");
-                        return;
-                    } else {
-                        $i = 0;
-                        while ($row = $result->fetch_row()) {
-                          $units[$i] = array(
-                            'unitType' => intVal($row[1]), 
-                            'owner' => intVal($row[0]), 
-                            'location' => array(intVal($row[2]),intVal($row[3])), 
-                            'state' => $row[4],
-                            'health' => intVal($row[5])
-                          );
-                          $i++;
-                        }
-                        $result->free();
+            $row = $sth->fetch();
+            if (!$row) {
+                echo json_encode("failure");
+                //error
+                break;
+            }
 
-                        $query = "DELETE FROM Updates
-                                  WHERE GameID = '$gameid' 
-                                  AND Username = '$username'";
-                        $result = $db_server->query($query); $result->free();
-                    }
-                }
-
-                $arr = array(
-                  'map' => $map, 
-                  'game' => $game, 
-                  'players' => $players, 
-                  'units' => $units
+            for ($i = 0; $row; $row = $result->fetch(), $i++) {
+                $units[$i] = array(
+                    'unitType' => intVal($row[1]),
+                    'owner'    => intVal($row[0]),
+                    'location' => array( intVal($row[2]),intVal($row[3]) ),
+                    'state'    => $row[4],
+                    'health'   => intVal($row[5])
                 );
-                echo json_encode($arr);
-             }
+            }
             
+            clearUpdates($dbh, $gameid, $username);
+
+            $arr = array(
+              'map'     => $map,
+              'game'    => $game,
+              'players' => $players,
+              'units'   => $units
+            );
+            echo json_encode($arr);
             break;
 
         case('update'):
-            $gameID = filter_string($db_server, $_REQUEST['gameid']);
+            $gameID   = $_REQUEST['gameid'];
             $username = $_SESSION['username'];
             
-            $query = "SELECT EXTRACT(EPOCH FROM (NOW() - LastUpdated)),TurnTimeout, Turn 
-                      FROM Games WHERE GameID = '$gameID'";
-            $result = $db_server->query($query); 
-            if (!$result) {
+            $sth = $dbh->prepare(
+               "SELECT LastUpdated, TurnTimeout, Turn
+                FROM   Games
+                WHERE  GameID = ?"
+            );
+            $sth->execute([$gameID]);
+
+            $row = $sth->fetch();
+            if (!$row) {
               echo json_encode("failure");
+              //error no such game
               break;
             }
-            $row  = $result->fetch_row(); $result->free();
-            $diff = $row[0] - $row[1];
-            if ($row[1]>0 && $diff>=0) {
-                 endTurnOfPlayer($db_server,$row[2],$gameID,"System");
-            } 
-            $query = "SELECT Action FROM Updates
-                      WHERE GameID = '$gameID' AND UserName = '$username'
-                      ORDER BY Time ASC";
-            
-            $result = $db_server->query($query); 
-            if (!$result) {
-              echo json_encode("failure");
-              break;
+
+            $timeSinceLastUpdate = timeSub(isoNow(), $row[0]);
+            $turnTimeLeft        = $row[1] - $timeSinceLastUpdate;
+            if ($row[1] > 0 && $turnTimeLeft <= 0) {
+                endTurnOfPlayer($dbh, $row[2], $gameID, "System");
             }
-            else{
-              if ($result->num_rows < 1){
-                echo json_encode(array());
-              } 
-              else {
-                echo sqlresult_to_json($result);
-              }
-              $result->free();
-            }
-            
-            
-            $query = "DELETE FROM Updates
-                      WHERE GameID = '$gameID' AND Username = '$username'";
-            $result = $db_server->query($query); 
-            $result->free();
-            
+            $sth = $dbh->prepare(
+               "SELECT   Action
+                FROM     Updates
+                WHERE    GameID = ? AND UserName = ?
+                ORDER BY Time ASC"
+            );
+            $sth->execute([$gameID,$username]);
+
+            $row = $sth->fetch();
+            echo sqlresult_to_json($sth);
+
+            clearUpdates($dbh, $gameID, $username);
             break;
 
         case('move'):
             $username = $_SESSION['username'];
-            $gameID = filter_string($db_server, $_REQUEST['gameid']);
-            $path = json_decode(filter_string($db_server, $_REQUEST['path']));
-            $target = json_decode(filter_string($db_server, $_REQUEST['target']));
+            $gameID   = $_REQUEST['gameid'];
+            $path     = json_decode($_REQUEST['path']);
+            $target   = json_decode($_REQUEST['target']);
             
             $initial = $path[0];
 
             //check if its a valid unit, current player's unit and not tired
-            $query = "SELECT UnitID, MapID
-                      FROM Games NATURAL JOIN PlayersGames NATURAL JOIN Maps NATURAL JOIN Units
-                      WHERE GameID = '$gameID'  AND SeqNo = Turn AND UserName = '$username' 
-                            AND Xloc='$initial[0]' AND Yloc='$initial[1]' AND State <> 'tired'";
+            $sth = $dbh->prepare(
+               "SELECT UnitID, MapID
+                FROM Games
+                    NATURAL JOIN PlayersGames
+                    NATURAL JOIN Maps
+                    NATURAL JOIN Units
+                WHERE GameID   = ? AND SeqNo = Turn
+                  AND Xloc     = ? AND -Yloc = ?
+                  AND UserName = ? AND State <> 'tired'"
+            );
+            $sth->execute([$gameID, $initial[0], $initial[1], $username]);
 
-            $$result = $db_server->query($query); 
-            if (!$result) {
+            $row = $sth->fetch();
+            if (!$row){
               echo json_encode("failure");
+              //error
               break;
             }
-            else if($result->num_rows < 1){
-              echo json_encode("failure");
-              $result->free();
-              break;
-            }
-            $row = $result->fetch_row(); $result->free();
+            $row    = $result;
             $unitID = $row[0];
-            $mapID = $row[1];
+            $mapID  = $row[1];
             
             //fetch MoveAllowance, unit type
-            $query = "SELECT MoveAllowance, UnitType FROM Units NATURAL JOIN UnitType
-                      WHERE UnitID = '$unitID'";
-            $result = $db_server->query($query); 
-            if (!$result){
+            $sth = $dbh->prepare(
+               "SELECT MoveAllowance, UnitType
+                FROM   Units NATURAL JOIN UnitType
+                WHERE  UnitID = ?"
+            );
+            $sth->execute([$unitID]);
+
+            $row = $sth->fetch();
+            if(!$row){
               echo json_encode("failure");
+              //error
               break;
             }
-            else if($result->num_rows < 1){
-              echo json_encode("failure");
-              $result->free();
-              break;
-            }
-            $row = $result->fetch_row(); $result->free();
-            $steps = $row[0];
+            $steps    = $row[0];
             $unitType = $row[1];
-            $size = count($path);
-            if ($size-1 > $row[0]){
+            $size     = count($path);
+            if ($size - 1 > $steps){
                 echo json_encode("failure");
+                //error
                 break;
             }
             
             $validPath = true;
             // validate path
             for ($i = 1; $i<$size; $i++){
-                if (!areAdjacent($path[$i-1][0],$path[$i-1][1],$path[$i][0],$path[$i][1])){
+                if (!areAdjacent( $path[$i-1][0],
+                                  $path[$i-1][1],
+                                  $path[$i][0],
+                                  $path[$i][1]   )){
                     $validPath = false;
                     break;
                 }
                 $curr = $path[$i];
                 //check if valid terrain for unit and fetch terain modifier
-                $query = "SELECT Modifier 
-                          FROM Terrain NATURAL JOIN Movement
-                          WHERE UnitType = '$unitType' AND MapID = '$mapID' 
-                            AND Xloc = '$curr[0]' AND Yloc = '$curr[1]'";
-                $result = $db_server->query($query); 
-                $rows = $result->num_rows;
-                
-                if ($rows < 1) {
+                $sth = $dbh->prepare(
+                   "SELECT Modifier
+                    FROM   Terrain NATURAL JOIN Movement
+                    WHERE  UnitType = ? AND MapID = ?
+                      AND  Xloc     = ? AND Yloc  = ?"
+                );
+                $sth->execute([$unitType,$mapID,$curr[0],$curr[1]]);
+
+                $row = $sth->fetch();
+                if (!$row) {
                     $validPath = false;
-                    $result->free();
+                    //error
                     break;
-                } else {
-                    $row = $result->fetch_row(); $result->free();
-                    $steps = $steps - $row[0];
-                    if ($steps<0){
-                      $validPath = false;
-                      break;
-                    }
+                }
+                $steps = $steps - $row[0];
+                if ($steps < 0){
+                    $validPath = false;
+                    //error
+                    break;
                 }
                 //check if cell not occupied by any other unit
-                $query = "SELECT Count(UnitID) FROM Units 
-                          WHERE gameID = '$gameID' AND Xloc = '$curr[0]' 
-                            AND Yloc = '$curr[1]' AND UnitID <> '$unitID'";
-                $result = $db_server->query($query); 
-                $row = $result->fetch_row(); $result->free();
-                if ($row[0]>0 ) {
+                $sth = $dbh->prepare(
+                   "SELECT Count(UnitID)
+                    FROM   Units
+                    WHERE  gameID = ? AND UnitID <> ?
+                      AND  Xloc   = ? AND Yloc    = ?"
+                );
+                $sth->execute([$gameID, $unitID, $curr[0], $curr[1]]);
+                $row = $sth->fetch();
+                if ($row[0] > 0) {
                     $validPath = false;
                     break;
-                } 
+                }
             }
-            if (!$validPath){
+            if (!$validPath) {
                 echo json_encode("failure");
                 break;
             }
-                
+
             //update unit's entry
             $final = $path[$size-1];
-            $query = "UPDATE Units
-                      SET Xloc = '$final[0]', Yloc = '$final[1]', State = 'tired'
-                      WHERE UnitID = '$unitID'";
-            if(!$result = $db_server->query($query)){
-              echo json_encode("failure");
-            }
-            else { $result->free(); }         
+            $sth = $dbh->prepare(
+               "UPDATE Units
+                SET    Xloc = ?, Yloc = ?, State = 'tired'
+                WHERE  UnitID = ?"
+            );
+            $sth->execute([$final[0], $final[1], $unitID]);
             
             //add move updates for other players
             $action = json_encode(array(
-              'type' => 'move', 
-              'path' => $path, 
-              'target' => $target
+                'type'   => 'move',
+                'path'   => $path,
+                'target' => $target
             ));
-            $query = "INSERT INTO Updates(GameID, Username, Action)
-                      SELECT GameID, Username, '$action' AS Action
-                      FROM PlayersGames 
-                      WHERE GameID = '$gameID' AND Username <>'$username'";
-            $result = $db_server->query($query); $result->free();        
+            $sth = $dbh->prepare(
+               "INSERT INTO Updates(GameID, Username, Action)
+                SELECT GameID, Username, ? AS Action
+                FROM   PlayersGames
+                WHERE  GameID = ? AND Username <> ?"
+            );
+            $sth->execute([$action, $gameID, $username]);
 
             //if the unit attacks
             if ($target != null) {
-                $query = "SELECT PAMinDist, PAMaxDist, Health, Defence
-                          FROM Units NATURAL JOIN UnitType NATURAL JOIN Terrain 
-                              NATURAL JOIN TerrainType
-                          WHERE UnitID = '$unitID' AND MapID = '$mapID'";
-                $result = $db_server->query($query); 
-                if (!$result){
-                  echo json_encode("failure");
-                  break;
+                $sth = $dbh->prepare(
+                   "SELECT PAMinDist, PAMaxDist, Health, Defence
+                    FROM Units
+                        NATURAL JOIN UnitType
+                        NATURAL JOIN Terrain
+                        NATURAL JOIN TerrainType
+                    WHERE UnitID = ? AND MapID = ?"
+                );
+                $sth->execute([$unitID,$mapID]);
+                $row = $sth->fetch();
+                if (!$row){
+                    echo json_encode("failure");
+                    //error
+                    break;
                 }
-                else if ($result->num_rows < 1){
-                  echo json_encode("failure");
-                  $result->free();
-                  break;
-                }
-                $row = $result->fetch_row(); $result->free();
-                $attackMin = $row[0];
-                $attackMax = $row[1];
-                $attackerHealth = $row[2];
+                $attackMin       = $row[0];
+                $attackMax       = $row[1];
+                $attackerHealth  = $row[2];
                 $attackerDefence = $row[3];
                 
-                $dist = abs($final[0]-$target[0])+abs($final[1]-$target[1]);
-                if ($dist>$attackMax || $dist<=$attackMin){
+                $dist = abs($final[0] - $target[0])
+                      + abs($final[1] - $target[1]);
+                if ($dist > $attackMax || $dist <= $attackMin) {
                     echo json_encode("failure");
+                    //error
                     break;
                 }
                 
-                $query = "SELECT UnitID, UnitType, Defence, Health, PAMinDist, PAMaxDist
-                          FROM Units NATURAL JOIN UnitType NATURAL JOIN Games 
-                              NATURAL JOIN Terrain NATURAL JOIN TerrainType
-                          WHERE GameID = '$gameID' 
-                            AND Xloc = '$target[0]' AND Yloc = '$target[1]' 
-                            AND SeqNo <> Turn";
-                $result = $db_server->query($query); 
-                if (!$result){
-                  echo json_encode("failure");
-                  break;
+                $sth = $dbh->prepare(
+                   "SELECT UnitID, UnitType, Defence,
+                           Health, PAMinDist, PAMaxDist
+                    FROM Units NATURAL JOIN UnitType NATURAL JOIN Games
+                               NATURAL JOIN Terrain  NATURAL JOIN TerrainType
+                    WHERE GameID = ? AND SeqNo <> Turn
+                      AND Xloc   = ? AND Yloc = ?"
+                );
+                $sth->execute([$gameID, $target[0], $target[1]]);
+
+                $row = $sth->fetch();
+                if (!$row){
+                    echo json_encode("failure");
+                    //error
+                    break;
                 }
-                else if ($result->num_rows < 1){
-                  echo json_encode("failure");
-                  $result->free();
-                  break;
-                }
-                
-                $row = $result->fetch_row(); $result->free();
-                $targetID =  $row[0];
-                $targetType =  $row[1];
-                $defence =  $row[2];
-                $health =  $row[3];
+                $targetID    = $row[0];
+                $targetType  = $row[1];
+                $defence     = $row[2];
+                $health      = $row[3];
                 $defenderMin = $row[4];
                 $defenderMax = $row[5];
-                $query = "SELECT Modifier
-                          FROM Attack
-                          WHERE Attacker = '$unitType' AND Defender = '$targetType'";
-                $result = $db_server->query($query); 
-                if (!$result){
+
+                $sth = $dbh->prepare(
+                   "SELECT Modifier
+                    FROM   Attack
+                    WHERE  Attacker = ? AND Defender = ?"
+                );
+                $sth->execute([$unitType,$targetType]);
+
+                $row = $sth->fetch();
+                if (!$row){
                   echo json_encode("failure");
+                  //error
                   break;
                 }
-                else if ($result->num_rows < 1){
-                  echo json_encode("failure");
-                  $result->free();
-                  break;
-                }
-                
-                $row = $result->fetch_row(); $result->free();
-                $damage =  $row[0];
-                $damage = ceil (($attackerHealth/2)*$damage*$defence) + rand(0,1);
-                $health = $health - $damage;
-                if ($health <= 0) $health =0;
-                $query = "UPDATE Units
-                            SET Health = '$health'
-                            WHERE UnitID = '$targetID'";
-                  if (!$result = $db_server->query($query)) {
-                      echo json_encode("failure");
-                      break;
-                  }
-                  else { $result->free(); }
-                
+                $modifier = $row[0];
+                $damage   = ceil(($attackerHealth/2)*$modifier*$defence)
+                          + rand(0,1);
+                $health   = $health - $damage;
+                if ($health <= 0) $health = 0;
                 //add health updates for all players
                 $action = json_encode(array(
-                  'type' => 'setHealth',
-                  'target' => $target, 
-                  'health' => $health
+                    'type'   => 'setHealth',
+                    'target' => $target,
+                    'health' => $health
                 ));
-                $query = "INSERT INTO Updates(GameID, Username, Action)
-                          SELECT GameID, Username, '$action' AS Action
-                          FROM PlayersGames 
-                          WHERE GameID = '$gameID'";
-                $result = $db_server->query($query);
-                if (!$result ) {
-                    echo json_encode("failure");
-                    break;
-                }
-                else { $result->free(); }
+
+                $dbh->beginTransaction(); // -----------------------------
+                $sth = $dbh->prepare(
+                   "UPDATE Units
+                    SET    Health = ?
+                    WHERE  UnitID = ?"
+                );
+                $sth->execute([$health,$targetID]);
+                $sth = $dbh->prepare(
+                   "INSERT INTO Updates(GameID, Username, Action)
+                    SELECT GameID, Username, ? AS Action
+                    FROM   PlayersGames
+                    WHERE  GameID = ?"
+                );
+                $sth->execute([$action, $gameID]);
 
                 if ($health <= 0){
-                    checkPlayerDefeated($db_server,$gameID,$targetID);
-                    $query = "DELETE FROM Units 
-                              WHERE UnitID = '$targetID'";
-                    if (!$result = $db_server->query($query)) {
-                        echo json_encode("failure");
-                        break;
-                    }
-                    else { $result->free(); }
+                    checkPlayerDefeated($dbh,$gameID,$targetID);
+                    $sth = $dbh->prepare
+                        ("DELETE FROM Units WHERE UnitID = ?");
+                    $sth->execute([$targetID]);
+                }
+                else if ($dist > $defenderMin && $dist <= $defenderMax){
+                    $sth = $dbh->prepare(
+                       "SELECT Modifier
+                        FROM   Attack
+                        WHERE  Attacker = ?
+                        AND    Defender = ?"
+                    );
+                    $sth->execute([$targetType,$unitType]);
 
-                } else if($dist>$defenderMin && $dist<=$defenderMax){
-                    $query = "SELECT Modifier
-                              FROM Attack
-                              WHERE Attacker = '$targetType' 
-                              AND Defender = '$unitType'";
-                    $result = $db_server->query($query); 
-                    if (!$result) {
-                        echo json_encode("failure");
-                        break;
-                    }
-                    if ($result->num_rows > 0){
-                        $row = $result->fetch_row(); $result->free();
-                        $damage =  $row[0];
-                        $damage = 
-                          ceil (($health/2)*$damage*$attackerDefence) 
-                        + rand(0,1);
+                    $row = $sth->fetch();
+                    if ($row){
+                        $modifier = $row[0];
+                        $damage
+                            = ceil (($health/2)*$modifier*$attackerDefence)
+                            + rand(0,1);
                         $attackerHealth = $attackerHealth - $damage;
                         if ($attackerHealth <= 0){
                             $attackerHealth = 0;
-                            checkPlayerDefeated($db_server,$gameID,$unitID);
-                            $query = "DELETE FROM Units 
-                                      WHERE UnitID = '$unitID'";
-                            if (!$result = $db_server->query($query)) {
-                                echo json_encode("failure");
-                                break;
-                            }
-                            else { $result->free(); }
+                            checkPlayerDefeated($dbh,$gameID,$unitID);
+                            $sth = $dbh->prepare(
+                               "DELETE FROM Units
+                                WHERE UnitID = ?"
+                            );
+                            $sth->execute([$unitID]);
                         }
-                        $query = "UPDATE Units
-                                  SET Health = '$attackerHealth'
-                                  WHERE UnitID = '$unitID'";
-                        if (!$result = $db_server->query($query)) {
-                            echo json_encode("failure");
-                            break;
-                        }
-                        else { $result->free(); }
-                        $action = json_encode(array('type' => 'setHealth',
-                                    'target' => $final, 'health' => $attackerHealth));
-                        $query = "INSERT INTO Updates(GameID, Username, Action)
-                                  SELECT GameID, Username, '$action' AS Action
-                                  FROM PlayersGames 
-                                  WHERE GameID = '$gameID'";
-                        if (!$result = $db_server->query($query)) {
-                            echo json_encode("failure");
-                            break;
-                        }
-                        else { $result->free(); }
+                        $sth = $dbh->prepare(
+                           "UPDATE Units
+                            SET    Health = ?
+                            WHERE  UnitID = ?"
+                        );
+                        $sth->execute([$attackerHealth, $unitID]);
+
+                        $action = json_encode(array(
+                            'type'   => 'setHealth',
+                            'target' => $final,
+                            'health' => $attackerHealth
+                        ));
+                        $sth = $dbh->prepare(
+                           "INSERT INTO Updates(GameID, Username, Action)
+                            SELECT GameID, Username, ? AS Action
+                            FROM   PlayersGames
+                            WHERE  GameID = ?"
+                        );
+                        $sth->execute([$action, $gameID]);
                     }
                 }
-                
+                $dbh->commit(); // -----------------------------
             }
             echo json_encode("success");
             break;
 
         case('endTurn'):
-            $gameid = filter_string($db_server, $_POST['gameid']);
+            $gameid   = $_POST['gameid'];
             $username = $_SESSION['username'];
-            
-            $query = "SELECT SeqNo
-                      FROM PlayersGames NATURAL JOIN Games
-                      WHERE GameID = '$gameid' and UserName = '$username'
-                            and SeqNo = Turn";
-            $result = $db_server->query($query); 
-            if (!$result) {
+            $sth = $dbh->prepare(
+               "SELECT SeqNo
+                FROM   PlayersGames NATURAL JOIN Games
+                WHERE  GameID = ? AND UserName = ? AND SeqNo = Turn"
+            );
+            $sth->execute([$gameid,$username]);
+
+            $row = $sth->fetch();
+            if(!$row){
               echo json_encode("failure");
+              //error
               break;
             }
-            else if($result->num_rows < 1){
-              $result->free();
-              echo json_encode("failure");
-              break;
-            }
-            $row = $result->fetch_row(); $result->free();
             $seqno = $row[0];
-
-            echo endTurnOfPlayer($db_server,$seqno,$gameid,$username);
-
+            echo endTurnOfPlayer($dbh,$seqno,$gameid,$username);
             break;
              
         case('resign'):
-            $gameid = filter_string($db_server, $_POST['gameid']);
+            $gameid   = $_POST['gameid'];
             $username = $_SESSION['username'];
-            $currentplayer = false;
 
-            $query = "SELECT SeqNo 
-                      FROM PlayersGames NATURAL JOIN Games
-                      WHERE GameID = '$gameid' and UserName = '$username'
-                                and SeqNo = Turn";
-            $result = $db_server->query($query);
-            if ($result) {
-              if($result->num_rows > 0){
-                $currentplayer = true;
-              }
-              $result->free();
-            }
+            $sth = $dbh->prepare(
+               "SELECT SeqNo, Turn
+                FROM   PlayersGames NATURAL JOIN Games
+                WHERE  GameID = ? AND UserName = ?"
+            );
+            $sth->execute([$gameid,$username]);
 
-            $query = "DELETE FROM PlayersGames
-                      WHERE GameID = '$gameid' and UserName = '$username'
-                      RETURNING SeqNo";
-            $result = $db_server->query($query);
-            if (!$result) {
-                echo "failure";
+            $row = $sth->fetch();
+            if (!$row) {
+                //error
                 break;
             }
-            else { $result->free(); }
-            $row = $result->fetch_row(); $result->free();
-            $seqNo = $row[0];
-
-            $action = json_encode(array(
-              'type' => 'removePlayer', 
+            $msg           = $username . " has resigned";
+            $currentplayer = intVal($row[1]) === intVal($row[0]);
+            $seqNo         = $row[0];
+            $action        = json_encode(array(
+              'type'   => 'removePlayer',
               'player' => intVal($seqNo)
             ));
-            $msg = $username . " has resigned";
 
-            $query = "BEGIN;
-                      DELETE FROM Units
-                      WHERE GameID = '$gameid' and SeqNo = '$seqNo';
-                      UPDATE Players
-                      Set Defeats = Defeats + 1
-                      WHERE UserName = '$username';
-                      INSERT INTO Updates(GameID,Username,Action)
-                          SELECT GameID,Username,'$action' AS Action
-                          FROM PlayersGames 
-                          WHERE GameID = '$gameid';
-                      INSERT INTO Messages(GameID,UserName,Message)
-                      VALUES('$gameid','System','$msg');
-                      COMMIT;";
+            $dbh->beginTransaction(); // -----------------------------
+            $sth = $dbh->prepare(
+               "DELETE FROM PlayersGames
+                WHERE GameID = ? AND UserName = ?"
+            );
+            $sth->execute([$gameid,$username]);
+            $sth = $dbh->prepare(
+               "DELETE FROM Units
+                WHERE GameID = ? AND SeqNo = ?"
+            );
+            $sth->execute([$gameid, $seqNo]);
+            $sth = $dbh->prepare(
+               "UPDATE Players
+                SET    Defeats = Defeats + 1
+                WHERE  UserName = ?"
+            );
+            $sth->execute([$username]);
+            $sth = $dbh->prepare(
+               "INSERT INTO Updates(GameID,Username,Action)
+                SELECT GameID, Username, ? AS Action
+                FROM   PlayersGames
+                WHERE  GameID = ?"
+            );
+            $sth->execute([$action, $gameid]);
+            $sth = $dbh->prepare(
+               "INSERT INTO Messages(GameID, UserName, Message)
+                VALUES              (?,      'System', ?      )"
+            );
+            $sth->execute([$gameid, $msg]);
+            $dbh->commit(); // -----------------------------
                       
-            $result = $db_server->query($query);
-            if (!$result){
-                echo "failure";
-            } else {
-                if ($currentplayer){
-                  endTurnOfPlayer($db_server,$seqNo,$gameid,$username);
-                }
-                $result->free(); 
-                echo "success";
+            if ($currentplayer) {
+                endTurnOfPlayer($dbh,$seqNo,$gameid,$username);
             }
+            echo "success";
             break;
 
         case('gameover'):
-            $gameid = filter_string($db_server, $_POST['gameid']);
+            $gameid = $_POST['gameid'];
             $username = $_SESSION['username'];
                         
-            $query = "SELECT Team 
-                      FROM PlayersGames
-                      WHERE GameID = '$gameid' and UserName = '$username'";
-            $result = $db_server->query($query);
-            if (!$result) {
+            $sth = $dbh->prepare(
+               "SELECT Team
+                FROM   PlayersGames
+                WHERE  GameID = ? AND UserName = ?"
+            );
+            $sth->execute([$gameid,$username]);
+
+            $row = $sth->fetch();
+            if (!$row){
               echo json_encode("failure");
+              //error
               break;
             }
-            else if ($result->num_rows < 1){
-              echo json_encode("failure");
-              $result->free();
-              break;
-            }
-            $row = $result->fetch_row(); $result->free();
             $team = $row[0];
+            $sth = $dbh->prepare(
+               "SELECT GameID
+                FROM   Games
+                WHERE  GameID = ? AND InProgress = true"
+            );
+            $sth->execute([$gameid]);
 
-            $query = "SELECT GameID 
-                      FROM Games 
-                      WHERE GameID = '$gameid' 
-                        AND InProgress = true";
-            $result = $db_server->query($query);
-            if (!$result) {
-              echo json_encode("failure");
-              break;
-            }
-            else if ($result->num_rows < 1){
-              echo json_encode("failure");
-              $result->free();
-              break;
-            }
-
-            $result->free();
-
-            $query = "SELECT UnitID
-                      FROM Units NATURAL JOIN PlayersGames
-                      WHERE GameID = '$gameid' 
-                        AND Team <> '$team' 
-                        AND Health <> '0'";
-            $result = $db_server->query($query);
-            if (!$result) {
-              echo json_encode("failure");
-              break;
-            }
-            else if ($result->num_rows > 0){
-              $result->free();
-              echo json_encode("failure");
-              break;
-            }
-            else {
-              $result->free();
-              $query = "SELECT SeqNo
-                        FROM PlayersGames
-                        WHERE GameID = '$gameid' and Team = '$team'";
-              $result = $db_server->query($query);
-              $i = 0;
-              while ($row = $result->fetch_row()) {
-                  $players[$i] = intVal($row[0]);
-                  $i++;
-              }
-              $result->free();
-              $action = json_encode(array(
-                'type' => 'gameOver', 
-                'players' => $players
-              ));
-              $query = "BEGIN;
-                        UPDATE Games SET InProgress = false
-                            WHERE GameID = '$gameid';
-                        UPDATE Players
-                        SET Wins = Wins + 1
-                        WHERE UserName in (SELECT UserName FROM PlayersGames 
-                              WHERE GameID = '$gameid' and Team = '$team');
-                        UPDATE Players
-                        SET Defeats = Defeats + 1
-                        WHERE UserName not in (SELECT UserName FROM PlayersGames 
-                              WHERE GameID = '$gameid' and Team = '$team');
-                        INSERT INTO Updates(GameID,Username,Action)
-                            SELECT GameID,Username,'$action' AS Action
-                            FROM PlayersGames 
-                            WHERE GameID = '$gameid';
-                        COMMIT;";
-              $result = $db_server->query($query);
-              if (!$result) {
+            $row = $sth->fetch();
+            else if (!$row){
                 echo json_encode("failure");
-              } 
-              else {
-                $result->free();
-                echo json_encode("success");
-              }
+                //error - cannot find the game or not in progress
+                break;
             }
+            $sth = $dbh->prepare(
+               "SELECT UnitID
+                FROM   Units NATURAL JOIN PlayersGames
+                WHERE  GameID = ? AND Team <> ? AND Health <> '0'"
+            );
+            $sth->execute([$gameid,$team]);
 
+            $row = $sth->fetch();
+            if (!$row){
+                echo json_encode("failure");
+                // error - no units (should be at least one)
+                break;
+            }
+            $sth = $dbh->prepare(
+               "SELECT SeqNo
+                FROM   PlayersGames
+                WHERE  GameID = ? and Team = ?"
+            );
+            $sth->execute([$gameid,$team]);
+
+            for ($i = 0; $row = $sth->fetch(); $i++) {
+                $players[$i] = intVal($row[0]);
+            }
+            $action = json_encode(array(
+              'type'    => 'gameOver',
+              'players' => $players
+            ));
+
+            $dbh->beginTransaction(); // -----------------------------
+            $sth = $dbh->prepare(
+               "UPDATE Games
+                SET InProgress = false
+                WHERE GameID = ?"
+            );
+            $sth->execute([$gameid]);
+            $sth = $dbh->prepare(
+               "UPDATE Players
+                SET Wins = Wins + 1
+                WHERE UserName IN
+                   (SELECT UserName
+                    FROM   PlayersGames
+                    WHERE  GameID = ? AND Team = ?)"
+            );
+            $sth->execute([$gameid, $team]);
+            $sth = $dbh->prepare(
+               "UPDATE Players
+                SET    Defeats = Defeats + 1
+                WHERE  UserName NOT IN
+                   (SELECT UserName
+                    FROM   PlayersGames
+                    WHERE  GameID = ? AND Team = ?)"
+            );
+            $sth->execute([$gameid, $team]);
+            $sth = $dbh->prepare(
+               "INSERT INTO Updates(GameID, Username, Action)
+                SELECT GameID, Username, ? AS Action
+                FROM   PlayersGames
+                WHERE  GameID = ?"
+            );
+            $sth->execute([$action, $gameid]);
+            $dbh->commit(); // -----------------------------
+
+            echo json_encode("success");
             break;
     }
 
-    $db_server->close();
+    $dbh = null; //close connection
 }
 
-
-
-
-function endTurnOfPlayer($db_server,$seqno,$gameid,$username) {
-    $query = "SELECT SeqNo
-              FROM PlayersGames
-              WHERE GameID = '$gameid' and Alive = true
-              ORDER BY SeqNo ASC";
-    $result = $db_server->query($query);
-    if (!$result) {
+// trusting $seqno
+function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
+    $sth = $dbh->prepare(
+       "SELECT SeqNo
+        FROM   PlayersGames
+        WHERE  GameID = ? AND Alive = true
+        ORDER BY SeqNo ASC"
+    );
+    $sth->execute([$gameid]);
+    $rows = $sth->fetchAll();
+    if (!$rows) {
+        //error - no such game or no alive plauers
         return json_encode("failure");
     }
 
-    $noplayers = $result->num_rows;
-    $rows = array();
-    while($r = $result->fetch_assoc()) {
-        $rows[] = $r;
-    }
-    $result->free();
-    $i = 0;
-
+    $noplayers = count($rows);
+    $i = 0; // deliberate - propagating
     for (; $i < $noplayers; $i++) {
         if ($rows[$i]['seqno'] > $seqno) {
             break;
         }
     }
-
-    if ($i == $noplayers) {
-        $i = 0;
-    }
-    $turn = $rows[$i]['seqno'];
-    
-    
-    $query = "BEGIN;
-              UPDATE Games
-              SET Turn = '$turn', LastUpdated = 'NOW()'
-              WHERE GameID = '$gameid';
-              UPDATE Units
-              SET State = 'normal'
-              WHERE GameID = '$gameid' and SeqNo = '$turn';
-              COMMIT;";
-    $result = $db_server->query($query);
-    if (!$result) {
-        return json_encode("failure" . $turn);
-    }
-    else { $result->free(); }
-
-    if ($i == 0) {
-        $query = "UPDATE Games
-                  SET Day = Day + 1
-                  WHERE GameID = '$gameid'";
-        $result = $db_server->query($query);
-        if (!$result) {
-            return json_encode("failure");
-        }
-        else { $result->free(); }
-    }
-        
-    $action = json_encode(array(
+    if ($i === $noplayers) $i = 0; //cycle
+    $curTime = isoNow();
+    $turn    = $rows[$i]['seqno'];
+    $action  = json_encode(array(
       'type' => 'endTurn', 
       'next' => intVal($turn)
     ));
-    $query = "INSERT INTO Updates(GameID, Username, Action)
-                  SELECT GameID, Username, '$action' AS Action
-                  FROM PlayersGames 
-                  WHERE GameID = '$gameid' AND Username <>'$username'";
-    if (!$result = $db_server->query($query)) {
-      return json_encode("failure");
-    } 
-    else {
-      $result->free();
-      return json_encode("success");
-    }
+
+    $dbh->beginTransaction(); // -----------------------------
+    $query =  'UPDATE Games
+               SET    Turn = ?, LastUpdated = ?'
+    if ($i === 0) $query  .= ', Day = Day + 1';
+    $query .= 'WHERE  GameID = ?'
+    $sth = $dbh->prepare($query);
+    $sth->execute([$turn, $curTime, $gameid]);
+    $sth = $dbh->prepare(
+       "UPDATE Units
+        SET    State = 'normal'
+        WHERE  GameID = ? AND SeqNo = ?"
+    );
+    $sth->execute([$gameid, $turn]);
+    $sth = $dbh->prepare(
+       "INSERT INTO Updates(GameID, Username, Action)
+        SELECT GameID, Username, ? AS Action
+        FROM   PlayersGames
+        WHERE  GameID = ? AND Username <> ?"
+    );
+    $sth->execute([$action, $gameid, $username]);
+    $dbh->commit(); // -----------------------------
+
+    return json_encode("success");
 }
 
 ?>
