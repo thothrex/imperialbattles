@@ -20,6 +20,8 @@ var loc = "lobby";
 var popup = false;
 var kickingOut = false;
 
+var databaseTrue = '1';
+
 function lobbyInitialise() {
     $.ajax({
          type: "GET",
@@ -153,7 +155,7 @@ function updateGameSetup() {
         function(result){
             if (result.length > 0) {
                 setMapGamePlayers(result);
-                if (game.inprogress == "t") {
+                if (game.inprogress == databaseTrue) {
                     $.post("gameSetup.php",
                         {
                             'function': 'begin'
@@ -245,7 +247,7 @@ function startGame() {
         return;
     }
     for (var i = 0; i < players.length; i++) {
-        if (players[i].ready != "t") {
+        if (players[i].ready != databaseTrue) {
             alert("Players are not ready yet");
             return;
         }
@@ -588,7 +590,7 @@ function emptyContainer(container) {
 }
 
 function appendGame(field) {
-    var inprogress = (field.inprogress == 't') ? "IN PROGRESS" : "";
+    var inprogress = (field.inprogress == databaseTrue) ? "IN PROGRESS" : "";
     $("#serverList").append(
                 "<div id='g" + field.gameid
               +"' class='box' onclick=selectGame('g" + field.gameid + "','"
@@ -611,7 +613,7 @@ function selectGame(gameID,inProgress) {
         $("#" + document.forms["serverForm"]["server"].value).css("background","");
     document.forms["serverForm"]["server"].value = gameID;
     $("#" + gameID).css("background","red");
-	if (inProgress == 't') {
+	if (inProgress == databaseTrue) {
 		$("#joinBtn").text("Resume");
 	    $("#joinBtn").unbind().click(function() {resumeGame();});
 	} else {
@@ -677,7 +679,7 @@ function showGameOptionsForClient() {
     
     for (i = 0; i < players.length; i++) {
         $("#p" + (i+1) + "Name").text(players[i].username);
-        if (players[i].ready == "t")
+        if (players[i].ready == databaseTrue)
             $("#p" + (i+1) + "Ready").html("<img src='img/greendot.png' alt='yes' />");
         else
             $("#p" + (i+1) + "Ready").html("<img src='img/reddot.png' alt='no' />");
@@ -757,7 +759,7 @@ function updatePlayersView(){
     // show players options
     for (i = 0; i < players.length; i++) {
         $("#p" + (i+1) + "Name").text(players[i].username);
-        if (players[i].ready == "t")
+        if (players[i].ready == databaseTrue)
             $("#p" + (i+1) + "Ready").html("<img src='img/greendot.png' alt='yes' />");
         else
             $("#p" + (i+1) + "Ready").html("<img src='img/reddot.png' alt='no' />");
@@ -776,7 +778,7 @@ function updatePlayersView(){
                 + "<option value='3'>3</option><option value='4'>4</option>"
                 + "<option value='5'>5</option><option value='6'>6</option></select>");
             $("#teamOption").val(team );
-            if (players[i].ready == "t" && playername != game.hostname){
+            if (players[i].ready == databaseTrue && playername != game.hostname){
                 $('#colourOption').attr('disabled','disabled');
                 $('#teamOption').attr('disabled','disabled');
             }
