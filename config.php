@@ -6,6 +6,7 @@ date_default_timezone_set('Europe/London');
 set_error_handler("php_sql_error");
 /* Creates a connection to the MySQL server. */
 require_once('lib/password.php'); //backports password_hash from PHP 5.5
+require_once('time.php');
 
 function db_connect() {
     $ini = parse_ini_file('privateInfo.ini'); //holds DB user/password etc.
@@ -50,10 +51,6 @@ function sqlresult_to_json($result) {
     }
 
     return json_encode($rows);
-}
-
-function isoNow(){
-    return date('Y-m-d\TH:i:s');
 }
 
 ?>

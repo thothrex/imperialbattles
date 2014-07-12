@@ -1,6 +1,7 @@
 #!/usr/bin/php
 <?php
 require_once('config.php');
+require_once('time.php');
 
 if (!isset($_SESSION['username'])) {
     header("Location: index.php");
