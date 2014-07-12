@@ -4,17 +4,21 @@ require_once('config.php');
 require_once('time.php');
 // requires DBH to be throwing exceptions on error
 
+if (!isset($GLOBALS['playerColours'])) {
+    $GLOBALS['playerColours']
+        = ["red","blue","green","white","yellow","cyan","black"];
+}
+
 if (!isset($_SESSION['username'])) {
     header("Location: index.php");
     exit;
-} 
+}
 
 if (isset($_REQUEST['function'])) {
     $dbh      = db_connect();
     $function = $_REQUEST['function'];
 
     switch($function) {
-    	
         case('loadmaps'):
             $sth = $dbh->prepare(
                "SELECT MapID AS mapid,
@@ -102,12 +106,15 @@ if (isset($_REQUEST['function'])) {
               break;
             }
             $seqno  = strval($row[0] + 1);
+            $colour = findFreePlayerColour($dbh, $gameid);
 
             $dbh->beginTransaction(); //---------------------
 
-            $query = "INSERT INTO PlayersGames(UserName,GameID,SeqNo)
-                      VALUES('$username','$gameid','$seqno')";
-            $db_server->query($query);
+            $sth = $dbh->prepare(
+               "INSERT INTO PlayersGames(UserName,GameID,SeqNo,Colour)
+                VALUES(?,?,?,?)"
+            );
+            $sth->execute([$username, $gameid, $seqno, $colour]);
 
             $curTime = isoNow();
             $sth = $dbh->prepare(
@@ -391,6 +398,29 @@ if (isset($_REQUEST['function'])) {
             break;
     }
     $dbh = null; //close connection
+}
+
+function findFreePlayerColour($dbh, $gameid){
+    $sth = $dbh->prepare(
+        "SELECT Colour
+         FROM PlayersGames
+         WHERE GameID = ?"
+    );
+    $sth->execute([$gameid]);
+
+    $coloursAlreadyTaken = $sth->fetchAll(PDO::FETCH_NUM);
+    foreach ($GLOBALS['playerColours'] as $colour) {
+        $colourIsFree = true;
+        foreach($coloursAlreadyTaken as $takenColour) {
+            if ($takenColour[0] === $colour) {
+                $colourIsFree = false;
+            }
+        }
+        if ($colourIsFree) {
+            return $colour;
+        }
+    }
+    return false;
 }
 
 ?>
