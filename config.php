@@ -27,7 +27,7 @@ function db_connect() {
 
 function php_sql_error($errno, $errstr, $error_file, $error_line) {
     $file = fopen("error.log","a");
-    $error = isoNow() . " [$errno] '$errstr' in file: $error_file on line: $error_line\n";
+    $error = isoNow() . " [$errno] '$errstr' in file: $error_file on line: $error_line\r\n";
     fwrite($file,$error);
     fclose($file);
 }
