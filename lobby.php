@@ -194,7 +194,7 @@ include_once("story.html");
 <div id="rules" class="popup">
 <h1 class="yellow">How to play</h1>
 <?php
-include_once("rules.html");
+    include_once("rules.html");
 ?>
 <br />
 <button type="button" onclick="hideRulesL()">Close</button>
