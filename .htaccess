@@ -12,6 +12,6 @@ Header add Strict-Transport-Security "max-age=157680000"
 </FilesMatch>
 
 <FilesMatch "^privateInfo.ini$|^\.htaccess$|\.log$">
-  order allow,deny
-  deny from all
+  Order allow,deny
+  Deny from all
 </FilesMatch>
