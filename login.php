@@ -9,51 +9,36 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
     $password = $_POST['password'];
 
     $db_server = db_connect();
-    $statement = $db_server->prepare("SELECT UserName, PwdHash
-                                      FROM Players
-                                      WHERE UserName = ?");
-    $statement->bind_param('s', $username);
-    if (!( $statement->execute() )) {
-        error_log('SQL Error in login.php', 3, 'debug.log');
-    }
+    $sth = $db_server->prepare(
+       "SELECT UserName, PwdHash
+        FROM Players
+        WHERE UserName = ?"
+    );
+    $result = $sth->execute([$username]);
 
-    $result = $statement->get_result(); $statement->close();
-    if (!$result) {
-        echo "Invalid username.";
+    $row = $sth->fetch();
+    if (!$row) {
+        echo "Invalid username or password";
     }
-    else if($result->num_rows != 1){
-        echo "Invalid username.";
-        $result->free();
-    }        
+    else if ($sth->fetch()) {
+        echo "Invalid username or password";
+        error_log('Error in login.php - non-unique username',
+                   3, 'debug.log');
+    }
     else {
-        $row = $result->fetch_row(); $result->free();
         if ( $row[0] === $username && password_verify($password, $row[1]) ){
             $_SESSION['username'] = $username;
-            $statement = $db_server->prepare("UPDATE Players
-                                              SET LoggedOn = true
-                                              WHERE UserName = ?");
-            $statement->bind_param('s', $username);
-            if (!( $statement->execute() )) {
-                error_log('SQL Error in login.php', 3, 'debug.log');
-                $statement->close();
-            }
-
-            $result = $statement->get_result(); $statement->close();
-            if (!$result) {
-            }
-            else {
-                echo 'true';
-                $result->free();
-            }
-
-            echo 'true'; //following old logic            
+            $sth = $db_server->prepare(
+               "UPDATE Players
+                SET LoggedOn = true
+                WHERE UserName = ?"
+            );
+            $result = $sth->execute([$username]);
+            echo 'true';
         } 
-        else {
-            echo "Invalid username/password combination";
-        }
-    } 
-
-    $db_server->close();
+        else { echo "Invalid username or password"; }
+    }
+    $db_server = null; //close connection
 } 
 
 ?>

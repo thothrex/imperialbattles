@@ -2,6 +2,7 @@
 <?php
 require_once('config.php');
 require_once('time.php');
+// requires DBH to be throwing exceptions on error
 
 if (!isset($_SESSION['username'])) {
     header("Location: index.php");
@@ -9,83 +10,64 @@ if (!isset($_SESSION['username'])) {
 } 
 
 if (isset($_REQUEST['function'])) {
-    $db_server = db_connect();
-    $function  = filter_string($db_server, $_REQUEST['function']);
+    $dbh      = db_connect();
+    $function = $_REQUEST['function'];
 
     switch($function) {
     	
         case('loadmaps'):
-            $query =
-            "SELECT MapID AS mapid,
-                    MapName AS mapname,
-                    MaxPlayers AS maxplayers
-             FROM Maps";
-    	              
-            $result = $db_server->query($query); 
-            if ($result) {
-                echo sqlresult_to_json($result);
-                $result->free();
-            } 
-    	   
+            $sth = $dbh->prepare(
+               "SELECT MapID AS mapid,
+                       MapName AS mapname,
+                       MaxPlayers AS maxplayers
+                FROM Maps"
+            );
+            $sth->execute();
+            echo sqlresult_to_json($sth);
             break;
         
         case ('create'):
-            $username = filter_string($db_server, $_SESSION['username']);
-            $gamename = filter_string($db_server, $_GET['gamename']);
-            $map = filter_string($db_server, $_GET['map']);
+            $username = $_SESSION['username'];
+            $gamename = $_GET['gamename'];
+            $map      = $_GET['map'];
             
-            $query = "SELECT MaxPlayers AS maxplayers
-                      FROM Maps
-                      WHERE MapID = '$map'";
+            $sth = $dbh->prepare(
+               "SELECT MaxPlayers AS maxplayers
+                FROM Maps
+                WHERE MapID = ?"
+            );
+            $result = $sth->execute([$map]);
 
-            $result = $db_server->query($query);
-            $playerslimit = $result->fetch_row(); 
-            $playerslimit = $playerslimit[0];
-            $result->free();
+            $playerslimit = $sth->fetch();
+            $playerslimit = strval($playerslimit[0]);
             $curTime      = isoNow();
 
-            $query = "INSERT INTO Games(GameName,MapID,PlayersLimit,
-                                        HostName,LastUpdated, InProgress)
-                      VALUES('$gamename','$map','$playerslimit',
-                             '$username', '$curTime', false)";
+            $dbh->beginTransaction(); // -----------------------------
+            $sth = $dbh->prepare(
+                "INSERT INTO Games(GameName,MapID,PlayersLimit,
+                                   HostName,LastUpdated, InProgress)
+                 VALUES(?,?,?,?,?,?)"
+            );
+            $sth->execute([$gamename, $map,     $playerslimit,
+                                     $username, $curTime, false]);
 
-            $result = $db_server->query($query);
-            if (!$result) {
-                $gameCreateError = $db_server->error;
-                error_log("\r\ngameSetup - (first) create error: $gameCreateError",
-                        3, "debug.log");
-                echo json_encode(false);
-                break;
-            } 
-            //else
-            $query = "SELECT GameID AS gameid
-                      FROM Games
-                      WHERE GameName = '$gamename'
-                      AND HostName = '$username'";
-            $result = $db_server->query($query);
-            if (!$result) {
-                $gameCreateError = $db_server->error;
-                error_log("\r\ngameSetup - (second) create error: $gameCreateError",
-                        3, "debug.log");
-                echo json_encode(false);
-                break;
-            }
-            
-            $row = $result->fetch_row(); $result->free();
-            $gameID = $row[0];
-           
-            $query = "INSERT INTO PlayersGames(UserName,GameID,Colour,Ready)
-                      VALUES('$username','$gameID','red', true)";  
+            $sth = $dbh->prepare(
+               "SELECT GameID AS gameid
+                FROM   Games
+                WHERE  GameName = ? AND HostName = ?"
+            );
+            $sth->execute([$gamename, $username]);
 
-            if (!$result = $db_server->query($query)) {
-                $gameCreateError = $db_server->error;
-                error_log("\r\ngameSetup - (third) create error: $gameCreateError",
-                        3, "debug.log");
-                echo json_encode(false);
-                break;
-            }
+            $row    = $sth->fetch();
+            $gameID = strval($row[0]);
+            $sth = $dbh->prepare(
+               "INSERT INTO PlayersGames(UserName,GameID,Colour,Ready)
+                VALUES(?,?,'red', true)"
+            );
+            $sth->execute([$username, $gameID]);
+            $dbh->commit(); // -----------------------------
 			
-            $query = 
+            $sth = $dbh->prepare(
               "SELECT GameID AS gameid,           MapID AS mapid,
                       MapName AS mapname,         MaxPlayers AS maxplayers,
                       Width AS width,             Height AS height,
@@ -95,381 +77,320 @@ if (isset($_REQUEST['function'])) {
                       Colour AS colour,           Team AS team,
                       Ready AS ready
               FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
-              WHERE GameID = '$gameID'
-              ORDER BY SeqNo ASC";
-
-            $result = $db_server->query($query);
-            if (!$result) {
-              $gameCreateError = $db_server->error;
-              error_log("\r\ngameSetup - (fourth) create error: $gameCreateError",
-                      3, "debug.log");
-              echo json_encode(false);
-            }
-            else {
-              echo sqlresult_to_json($result);
-              $result->free();
-            }
+              WHERE GameID = ?
+              ORDER BY SeqNo ASC"
+            );
+            $result = $sth->execute([$gameID]);
+            echo sqlresult_to_json($sth);
             break;
 
         case ('join'):
-            $gameid = filter_string($db_server, $_POST['gameid']);
-            $username = filter_string($db_server, $_SESSION['username']);
+            $gameid   = strval($_POST['gameid']);
+            $username = $_SESSION['username'];
 			
-            $query = "SELECT NoPlayers, PlayersLimit
-                      FROM Games
-                      WHERE GameID = '$gameid'";
-            $result = $db_server->query($query);
-            if (!$result){
-              $gameJoinError = $db_server->error;
-              error_log("\r\ngameSetup?function=join error: $gameJoinError",
-                    3, "debug.log");
-              echo "failure";
-              break;
-            }
+            $sth = $dbh->prepare(
+               "SELECT NoPlayers, PlayersLimit
+                FROM Games
+                WHERE GameID = ?"
+            );
+            $sth->execute([$gameid]);
 
-            $row = $result->fetch_row(); $result->free();
+            $row = $sth->fetch();
             if ($row[0] >= $row[1]){
-              $gameJoinError = $db_server->error;
-              error_log("\r\ngameSetup?function=join error: $gameJoinError",
-                    3, "debug.log");
+              // too many players
               echo "failure";
               break;
             }
-            $seqno = $row[0] + 1;
+            $seqno  = strval($row[0] + 1);
 
-            //$db_server->begin_transaction(); requires PHP 5.5
-            $db_server->autocommit(FALSE);
+            $dbh->beginTransaction(); //---------------------
 
             $query = "INSERT INTO PlayersGames(UserName,GameID,SeqNo)
                       VALUES('$username','$gameid','$seqno')";
             $db_server->query($query);
 
             $curTime = isoNow();
-            $query = "UPDATE Games
-                      SET NoPlayers = NoPlayers + 1, LastUpdated = '$curTime'
-                      WHERE GameID = '$gameid'";
-            $db_server->query($query);
+            $sth = $dbh->prepare(
+               "UPDATE Games
+                SET NoPlayers = NoPlayers + 1, LastUpdated = ?
+                WHERE GameID = ?"
+            );
+            $sth->execute([$curTime, $gameid]);
 
-            $result = $db_server->commit(); $db_server->autocommit(TRUE);
-					        
-            if (!$result) {
-                $gameJoinError = $db_server->error;
-                error_log("\r\ngameSetup?function=join error: $gameJoinError",
-                      3, "debug.log");
-                echo "failure";
-            }
-            else {
-                echo "success";
-            } 
+            $result = $dbh->commit(); //---------------------
+
+            echo "success";
             break;
 
         case ('initialRetrieve'):
-            $gameID = filter_string($db_server, $_GET['gameid']);
-			
-            $query = "SELECT GameID AS gameid,    MapID AS mapid,
-                      MapName AS mapname,         MaxPlayers AS maxplayers,
-                      Width AS width,             Height AS height,
-                      GameName AS gamename,       PlayersLimit AS playerslimit,
-                      TurnTimeout AS turntimeout, HostName AS hostname,
-                      LastUpdated AS lastupdated, UserName AS username,
-                      Colour AS colour,           Team AS team,
-                      Ready AS ready,             InProgress AS inprogress
-                      FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
-			                WHERE GameID = '$gameID' ORDER BY SeqNo ASC";
-					 
-            $result = $db_server->query($query);
-            if ($result) {
-                echo sqlresult_to_json($result);
-                $result->free();
-            } 
-    	   
+            $gameID = strval($_GET['gameid']);
+            $sth = $dbh->prepare(
+               "SELECT GameID AS gameid,        MapID AS mapid,
+                    MapName AS mapname,         MaxPlayers AS maxplayers,
+                    Width AS width,             Height AS height,
+                    GameName AS gamename,       PlayersLimit AS playerslimit,
+                    TurnTimeout AS turntimeout, HostName AS hostname,
+                    LastUpdated AS lastupdated, UserName AS username,
+                    Colour AS colour,           Team AS team,
+                    Ready AS ready,             InProgress AS inprogress
+                FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
+			    WHERE GameID = ?
+                ORDER BY SeqNo ASC"
+            );
+            $sth->execute([$gameID]);
+            echo sqlresult_to_json($sth);
             break;
 
 	      case ('retrieve'):
-            $gameID = filter_string($db_server, $_GET['gameid']);
-            $lastUpdated = filter_string($db_server, $_GET['lastUpdated']);
+            $gameID      = strval($_GET['gameid']);
+            $lastUpdated = $_GET['lastUpdated'];
 			
-            $query = "SELECT GameID FROM Games
-                      WHERE GameID = '$gameID'";
-            $result = $db_server->query($query);
-            if(!$result){
-              $gameRetrieveError = $db_server->error;
-              error_log("\r\ngameSetup: retrieve error: $gameRetrieveError",
-                        3, "debug.log");
-              echo json_encode(false);
-              break;
-            }
-            else if($result->num_rows < 1){
+            $sth = $dbh->prepare(
+               "SELECT GameID FROM Games
+                WHERE GameID = ?"
+            );
+            $result = $sth->execute([$gameID]);
+            if (!$sth->fetch()) {
               error_log("\r\ngameSetup: retrieve error: no game with ID $gameID exists",
                         3, "debug.log");
               echo json_encode(false);
-              $result->free();
               break;
             }
 
-            $query = 
-              "SELECT GameID AS gameid,           MapID AS mapid, 
-                      MapName AS mapname,         MaxPlayers AS maxplayers,
-                      Width AS width,             Height AS height,
-                      GameName AS gamename,       PlayersLimit AS playerslimit,
-                      TurnTimeout AS turntimeout, HostName AS hostname, 
-                      LastUpdated AS lastupdated, UserName AS username,
-                      Colour AS colour,           Team AS team,
-                      Ready AS ready,             InProgress AS inprogress
-                      FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
-                      WHERE GameID = '$gameID' AND LastUpdated > '$lastUpdated'
-                      ORDER BY SeqNo ASC";
-					 
-            $result = $db_server->query($query);
-            if(!$result){
-              $gameRetrieveError = $db_server->error;
-              error_log("\r\ngameSetup: retrieve error: $gameRetrieveError",
-                        3, "debug.log");
-              echo json_encode(true); //true means client is up-to-date (or SQL error)
-              break;
-            }
-            else if($result->num_rows < 1){
-              echo json_encode(true); //true means client is up-to-date (or SQL error)
-              $result->free();
-              break;
-            }
-            else {
-              echo sqlresult_to_json($result);
-              $result->free();
-            }            
-   
+            $sth = $dbh->prepare(
+               "SELECT GameID AS gameid,        MapID AS mapid,
+                    MapName AS mapname,         MaxPlayers AS maxplayers,
+                    Width AS width,             Height AS height,
+                    GameName AS gamename,       PlayersLimit AS playerslimit,
+                    TurnTimeout AS turntimeout, HostName AS hostname,
+                    LastUpdated AS lastupdated, UserName AS username,
+                    Colour AS colour,           Team AS team,
+                    Ready AS ready,             InProgress AS inprogress
+                FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
+                WHERE GameID = ? AND LastUpdated > ?
+                ORDER BY SeqNo ASC"
+			);
+            $result = $sth->execute([$gameID, $lastUpdated]);
+            $rows   = $sth->fetchAll(PDO::FETCH_ASSOC);
+            //true means client is up-to-date
+            if (!$rows){ echo json_encode(true);  }
+            else       { echo json_encode($rows); }
             break;
 
         case ('abandon'):
-            $gameID = filter_string($db_server, $_POST['gameid']);
-            $username = filter_string($db_server, $_SESSION['username']);
-			
-            //$db_server->begin_transaction(); requires PHP 5.5
-            $db_server->autocommit(FALSE);
+            $gameID   = strval($_POST['gameid']);
+            $username = $_SESSION['username'];
+
+            $sth = $dbh->prepare(
+               "SELECT SeqNo FROM PlayersGames
+                WHERE Username = ? AND GameID = ?"
+            );
+            $sth->execute([$username, $gameID]);
+            $seqNo = $sth->fetch()[0];
+
+            $dbh->beginTransaction(); // ------------------
+            $sth = $dbh->prepare(
+               "DELETE FROM PlayersGames
+			    WHERE UserName = ? AND GameID = ?"
+            );
+            $sth->execute([$username, $gameID]);
+
+            $sth = $dbh->prepare(
+               "UPDATE PlayersGames
+                SET    SeqNo = SeqNo -1
+                WHERE  GameID = ?
+                  AND  SeqNo > ?"
+            );
+            $sth->execute([$gameID, $seqNo]);
 
             $curTime = isoNow();
-            $query = "UPDATE Games
-                      SET NoPlayers = NoPlayers - 1, LastUpdated = '$curTime'
-			                WHERE GameID = '$gameID'";
-            $db_server->query($query);
+            $sth = $dbh->prepare(
+               "UPDATE Games
+                SET NoPlayers = NoPlayers - 1, LastUpdated = ?
+                WHERE GameID = ?"
+            );
+            $sth->execute([$curTime, $gameID]);
+            $dbh->commit(); // -------------------
 
-			      $query = "UPDATE PlayersGames SET SeqNo = SeqNo -1
-			                WHERE GameID = '$gameID' 
-			                    AND SeqNo > (SELECT SeqNo FROM PlayersGames
-			                              WHERE Username = '$username' AND GameID = '$gameID')";
-            $db_server->query($query);
-
-            $query = "DELETE FROM PlayersGames
-			                WHERE UserName = '$username' and GameID = '$gameID'";
-            $db_server->query($query);
-					        
-            $result = $db_server->commit(); $db_server->autocommit(TRUE);
-            if (!$result) {
-                $gameAbandonError = $db_server->error;
-                error_log("gameSetup.php?function=abandon error:
-                           $gameAbandonError",3,'debug.log');
-                echo "failure";
-            }
-            else {
-                echo "success";
-            } 
+            echo "success";
             break;
 
         case('delete'):
-            $gameID = filter_string($db_server, $_POST['gameid']);
+            $gameID = strval($_POST['gameid']);
 
-            //$db_server->begin_transaction(); requires PHP 5.5
-            $db_server->autocommit(FALSE);
+            $dbh->beginTransaction(); // ------------------
+            $sth = $dbh->prepare(
+               "DELETE FROM Games
+                WHERE GameID = ?"
+            );
+            $sth->execute([$gameID]);
+            $sth = $dbh->prepare(
+               "DELETE FROM PlayersGames
+                WHERE GameID = ?"
+            );
+            $sth->execute([$gameID]);
+            $dbh->commit(); // -------------------
 
-            $query = "DELETE FROM Games
-                      WHERE GameID = '$gameID'";
-            $db_server->query($query);
-
-            $query = "DELETE FROM PlayersGames
-                      WHERE GameID = '$gameID'";
-            $db_server->query($query);
-
-            $result = $db_server->commit(); $db_server->autocommit(TRUE);
-
-            if (!$result) {
-              $gameDeletionError = $db_server->error;
-              error_log("Error: $gameDeletionError",3,'debug.log');
-              echo "failure";
-            }
-            else {
-              echo "success";
-            }
+            echo "success";
             break;
           
          case('removePlayer'):
-            $gameID = filter_string($db_server, $_POST['gameid']);
-            $username = filter_string($db_server, $_POST['username']);
-            $hostname = filter_string($db_server, $_SESSION['username']);
+            $gameID   = strval($_POST['gameid']);
+            $username = $_POST['username'];
+            $hostname = $_SESSION['username'];
             
-            $query = "SELECT HostName FROM Games WHERE HostName = '$hostname'";
-            $result = $db_server->query($query);
-            if (!$result) {
-              echo "Only the host can kick out players";
-              break;
-            }
-            else if ($result->num_rows < 1) {
-              echo "Only the host can kick out players";
-              $result->free();
-              break;
+            $sth = $dbh->prepare(
+               "SELECT HostName FROM Games WHERE HostName = ?"
+            );
+            $sth->execute([$hostname]);
+            if (!$sth->fetch()) {
+                echo "Only the host can kick out players";
+                break;
             }
             
-            $query = "SELECT SeqNo
-                      FROM PlayersGames
-                      WHERE UserName = '$username' and GameID = '$gameID'";
-            $result = $db_server->query($query);
-            if (!$result) {
+            $sth = $dbh->prepare(
+               "SELECT SeqNo
+                FROM PlayersGames
+                WHERE UserName = ? AND GameID = ?"
+            );
+            $sth->execute([$username, $gameID]);
+
+            $row = $sth->fetch();
+            if (!$row) {
               echo "The player has already been kicked out.";
               break;
             }
-            else if ($result->num_rows < 1){
-              echo "The player has already been kicked out.";
-              $result->free();
-              break;
-            }
-            $row = $result->fetch_row(); $result->free();
-            $seqno = $row[0];
+            $seqno = strval($row[0]);
 
-            //$db_server->begin_transaction(); requires PHP 5.5
-            $db_server->autocommit(FALSE);
-
-            $query = "DELETE FROM PlayersGames
-			                WHERE UserName = '$username' and GameID = '$gameID'";
-            $db_server->query($query);
+            $dbh->beginTransaction(); // -------------
+            $sth = $dbh->prepare(
+               "DELETE FROM PlayersGames
+			    WHERE UserName = ? AND GameID = ?"
+            );
+            $sth->execute([$username, $gameID]);
 
             $curTime = isoNow();
-            $query = "UPDATE Games
-                      SET NoPlayers = NoPlayers - 1, LastUpdated = '$curTime'
-			                WHERE GameID = '$gameID'";
-            $db_server->query($query);
+            $sth = $dbh->prepare(
+               "UPDATE Games
+                SET NoPlayers = NoPlayers - 1, LastUpdated = ?
+			    WHERE GameID = ?"
+            );
+            $sth->execute([$curTime, $gameID]);
 
-	          $query = "UPDATE PlayersGames SET SeqNo = SeqNo -1
-	                    WHERE SeqNo > '$seqno'";
-            $db_server->query($query);
-                      
-            $result = $db_server->commit(); $db_server->autocommit(TRUE);
-            if (!$result = $db_server->query($query)) {
-              echo "The player has already been kicked out.";
-            } 
-            else {
-              echo "success";
-            }
+	       $sth = $dbh->prepare(
+               "UPDATE PlayersGames
+                SET    SeqNo  = SeqNo -1
+	            WHERE  GameID = ? AND SeqNo > ?"
+            );
+            $sth->execute([$gameID, $seqno]);
+            $result = $dbh->commit(); // --------------
+
+            echo "success";
             break;
 
         case('updateGame'):
-            $mapID = filter_string($db_server, $_POST['mapID']);
-            $playersLimit = filter_string($db_server, $_POST['playersLimit']);
-            $turnTimeout = filter_string($db_server, $_POST['turnTimeout']);
-            $gameID = filter_string($db_server, $_POST['gameid']);;
+            $mapID        = strval($_POST['mapID']);
+            $playersLimit = $_POST['playersLimit'];
+            $turnTimeout  = $_POST['turnTimeout'];
+            $gameID       = strval($_POST['gameid']);
            
-            $query = "SELECT NoPlayers FROM Games
-                      WHERE GameID = '$gameID'";
-            $result = $db_server->query($query);
-            if (!$result){
-              echo "failure";
-              break;
-            }
-            $row = $result->fetch_row(); $result->free();
+            $sth = $dbh->prepare(
+               "SELECT NoPlayers FROM Games
+                WHERE GameID = ?"
+            );
+            $sth->execute([$gameID]);
+
+            $row = $sth->fetch();
             if ($row[0] > $playersLimit){
-              echo "failure";
+              echo "failure"; //too many players to reduce limit
               break;
             }
                       
             $curTime = isoNow();
-            $query = "UPDATE Games 
-                      SET MapID = '$mapID',
-                          PlayersLimit = '$playersLimit',
-                          TurnTimeout = '$turnTimeout',
-                          LastUpdated = '$curTime'
-                      WHERE GameID = '$gameID'";
-
-            if (!$result = $db_server->query($query)) {
-                echo "failure";
-            } else {
-                echo "success";
-                $result->free();
-            } 
+            $sth = $dbh->prepare(
+               "UPDATE Games 
+                SET MapID        = ?,
+                    PlayersLimit = ?,
+                    TurnTimeout  = ?,
+                    LastUpdated  = ?
+                WHERE GameID = ?"
+            );
+            $sth->execute(
+                [$mapID, $playersLimit, $turnTimeout, $curTime, $gameID]
+            );
+            echo "success";
             break;   
        
         case('updatePlayer'):
-            $gameID = filter_string($db_server, $_POST['gameid']);
-			      $username = filter_string($db_server, $_SESSION['username']);
-			      $colour = filter_string($db_server, $_POST['colour']);
-			      $team   = filter_string($db_server, $_POST['team']);
-			      
-			      $query = "SELECT * FROM PlayersGames 
-			                WHERE GameID = '$gameID' AND Colour = '$colour'";
-			      $result = $db_server->query($query);
+            $gameID   = strval($_POST['gameid']);
+	        $username = $_SESSION['username'];
+	        $colour   = $_POST['colour'];
+	        $team     = $_POST['team'];
 
-            //$db_server->begin_transaction(); requires PHP 5.5
-            $db_server->autocommit(FALSE);
+	        $sth = $dbh->prepare(
+               "SELECT UserName AS username, GameID AS gameid,
+                       Colour AS colour,     SeqNo AS seqno,
+                       Team AS team,         Ready AS ready,
+                       Alive AS alive
+                FROM  PlayersGames
+			    WHERE GameID = ? AND Colour = ?"
+            );
+			$sth->execute([$gameID, $colour]);
 
-            $curTime = isoNow();
-            $query = "UPDATE Games SET LastUpdated ='$curTime'
-                      WHERE GameID = '$gameID'";
-            $db_server->query($query);
-
-            if(!$result){
-              $query = "UPDATE PlayersGames 
-                        SET Colour = '$colour', Team = '$team'
-                        WHERE GameID = '$gameID' AND UserName = '$username'";
-              $db_server->query($query);
+            $dbh->beginTransaction(); // ----------------
+            if ( $sth->fetch() ){
+                $sth = $dbh->prepare(
+                   "UPDATE PlayersGames
+                    SET    Team = ?
+                    WHERE  GameID = ? AND UserName = ?"
+                );
+                $sth->execute([$team, $gameID, $username]);
             }
             else {
-              $returnedAtLeastOneRow = $result->num_rows < 1;
-              $result->free();
-              if($returnedAtLeastOneRow){
-                $query = "UPDATE PlayersGames 
-                          SET Colour = '$colour', Team = '$team'
-                          WHERE GameID = '$gameID' AND UserName = '$username'";
-              }              
-              else {
-                $query = "UPDATE PlayersGames 
-                          SET Team = '$team'
-                          WHERE GameID = '$gameID' AND UserName = '$username'";  
-              }
-              $db_server->query($query);
-            }
-
-            $result = $db_server->commit(); $db_server->autocommit(TRUE);                      
-            if (!$result) {
-                 echo "failure";
-            } else {
-                 echo "success";
+                $sth = $dbh->prepare(
+                   "UPDATE PlayersGames
+                    SET    Colour = ?, Team = ?
+                    WHERE  GameID = ? AND UserName = ?"
+                );
+                $sth->execute([$colour, $team, $gameID, $username]);
             } 
+
+            $curTime = isoNow();
+            $sth = $dbh->prepare(
+               "UPDATE Games
+                SET    LastUpdated = ?
+                WHERE  GameID = ?"
+            );
+            $sth->execute([$curTime, $gameID]);
+            $dbh->commit(); // -------------
+
+            echo "success";
             break;
 
         case('ready'):
-            $gameID = filter_string($db_server, $_POST['gameid']);
-			      $username = filter_string($db_server, $_SESSION['username']);
+            $gameID   = strval($_POST['gameid']);
+			$username = $_SESSION['username'];
+            $curTime  = isoNow();
 
-            //$db_server->begin_transaction(); requires PHP 5.5
-            $db_server->autocommit(FALSE);
+            $dbh->beginTransaction(); // -------------
+            $sth = $dbh->prepare(
+               "UPDATE Games
+                SET LastUpdated = ?
+			    WHERE GameID = ?"
+            );
+            $sth->execute([$curTime, $gameID]);
+            $sth = $dbh->prepare(
+               "UPDATE PlayersGames
+                SET Ready = true
+                WHERE GameID = ? AND UserName = ?"
+            );
+            $sth->execute([$gameID, $username]);
 
-            $curTime = isoNow();
-            $query = "UPDATE Games SET LastUpdated ='curTime'
-			                WHERE GameID = '$gameID'";
-            $db_server->query($query);
-
-            $query = "UPDATE PlayersGames 
-                      SET Ready = true
-                      WHERE GameID = '$gameID' AND UserName = '$username'";
-            $db_server->query($query);
-
-            $result = $db_server->commit(); $db_server->autocommit(TRUE);
-            if (!$result) {
-              echo "failure";
-            } 
-            else {
-              echo "success";
-            } 
+            $dbh->commit(); // -------------
+            echo "success";
             break;
     }
-    $db_server->close();
+    $dbh = null; //close connection
 }
 
 ?>

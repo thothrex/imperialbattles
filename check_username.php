@@ -3,25 +3,16 @@
 require_once('config.php');
 
 if (isset($_POST['username'])) {
-    $db_server = db_connect();
-    $username = filter_string($db_server, $_POST['username']);
+    $dbh       = db_connect();
+    $username  = $_POST['username'];
 
-    $query = "SELECT * FROM Players WHERE UserName = '$username'";
-    $result = $db_server->query($query);
+    $sth = $dbh->prepare("SELECT * FROM Players WHERE UserName = ?");
+    $sth->execute($username);
 
-    if(!$result){
-        echo "Available.";
-    }
-    else if ($result->num_rows === 0){
-        echo "Available.";
-        $result->free();
-    }        
-    else {
-        echo "Taken.";
-        $result->free();
-    }
+    if (!$sth->fetch()) { echo "Available."; }
+    else                { echo "Taken.";     }
 
-    $db_server->close();
-} 
+    $db_server = null; //close connection
+}
 
 ?>

@@ -4,30 +4,25 @@ ini_set('session.gc_maxlifetime',24 * 60 * 60);
 session_start();
 date_default_timezone_set('Europe/London');
 set_error_handler("php_sql_error");
+set_exception_handler("exceptionHandler");
 /* Creates a connection to the MySQL server. */
 require_once('lib/password.php'); //backports password_hash from PHP 5.5
 require_once('time.php');
 
 function db_connect() {
-    $ini = parse_ini_file('privateInfo.ini'); //holds DB user/password etc.
-    $db_server = new mysqli(
-        $ini['dbDomain'],
-        $ini['dbUsername'],
-        $ini['dbPassword'],
-        $ini['dbName']
-    );
-    if ($db_server->connect_error) {
-        die('Connect Error (' . $db_server->connect_errno . ') '
-            . $db_server->connect_error);
+    $ini         = parse_ini_file('privateInfo.ini'); //holds DB user/password etc.
+    $domain_name = $ini['dbDomain'];
+    $db_name     = $ini['dbName'];
+    $dsn         = "mysql:dbname=$db_name;host=$domain_name";
+    $dbh;
+    try {
+        $dbh = new PDO($dsn, $ini['dbUsername'], $ini['dbPassword']);
+        $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
-    return $db_server;
-}
-
-/* Sanitizes a string that is to be inserted into the database. */
-function filter_string($db_server, $string) {
-    if (get_magic_quotes_gpc())
-        $string = stripslashes($string);
-    return htmlentities(strip_tags($db_server->real_escape_string($string)));
+    catch (PDOException $e) {
+        die ('Connection failed: ' . $e->getMessage());
+    }
+    return $dbh;
 }
 
 function php_sql_error($errno, $errstr, $error_file, $error_line) {
@@ -37,6 +32,24 @@ function php_sql_error($errno, $errstr, $error_file, $error_line) {
     fclose($file);
 }
 
+function exceptionHandler($e){
+    $printedError = "\r\n\r\nException:";
+    if (get_class($e) === 'PDOException') {
+        $printedError
+            .= "\r\nSQL Error: {$e->errorInfo[2]}";
+    }
+    $printedError
+        .= "\r\n{$e->getFile()} at line {$e->getLine()}: {$e->getMessage()}";
+
+    $cur = $e;
+    while ($prev = $cur->getPrevious()){
+        $printedError
+            .= "\r\n\tCaused by exception in "
+             . "{$e->getFile()} at line {$e->getLine()}: {$e->getMessage()}";
+        $cur = $prev;
+    }
+    error_log($printedError, 3, "exceptions.log");
+}
 
 function export($string) {
     $file = fopen("php_console.log","w");
@@ -46,10 +59,9 @@ function export($string) {
 
 function sqlresult_to_json($result) {
     $rows = array();
-    while($r = $result->fetch_assoc()) {
+    while($r = $result->fetch()) {
         $rows[] = $r;
     }
-
     return json_encode($rows);
 }
 

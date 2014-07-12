@@ -30,21 +30,22 @@ if (!isset($_SESSION['username'])) {
 
 <div id="logoutScreen">
 <?php
-$db_server = db_connect();
-echo "<span id='usernameLabel'>" 
-    . filter_string($db_server, $_SESSION['username']) 
-    . "</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-$username = filter_string($db_server, $_SESSION['username']);
+    $db_server = db_connect();
+    $username = $_SESSION['username'];
+    echo "<span id='usernameLabel'>"
+        . $username
+        . "</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 
-$query = "SELECT Wins,Defeats
-          FROM Players
-          WHERE UserName = '$username'";
-$result = $db_server->query($query); 
-$row = $result->fetch_row();
-echo "W: $row[0] &nbsp;&nbsp;&nbsp; D: $row[1]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+    $sth = $db_server->prepare(
+       "SELECT Wins, Defeats
+        FROM Players
+        WHERE UserName = ?"
+    );
+    $sth->execute([$username]);
+    $row = $sth->fetch();
+    echo "W: $row[0] &nbsp;&nbsp;&nbsp; D: $row[1]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 
-$result->free();
-$db_server->close();
+    $db_server = null; //close connection
 ?>
 <button type="button" onclick="logout()">Logout</button>
 </div>
