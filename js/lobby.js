@@ -292,14 +292,20 @@ function playerReady() {
          'gameid' : game.gameid
         },
         function(data) {
-            if (data.match("failure")) {
-               alert("Error on ready");
-            } else {
+            if (data === 'failure') {
+               alert("There was a server error");
+            }
+            else if (data === 'success') {
                $("#startReadyBtn").text("WAITING...").attr('disabled','disabled');
                $('#colourOption').attr('disabled','disabled');
                $('#teamOption').attr('disabled','disabled');
             }
-        });
+            else {
+                alert("There was an error in marking yourself as ready: "
+                      + data);
+            }
+        }
+    );
 }
 
 function setMap() {
