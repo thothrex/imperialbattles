@@ -275,12 +275,13 @@ function startGame() {
             'gameid' : game.gameid
         },
         function(data) {
-            if (data.match("success")) {
+            if (data === "success") {
                 loc = "game";
                 document.forms["startGameForm"]["gameid"].value = game.gameid;
                 $("#startGameForm").submit();
-            } else {
-                alert("unable to start game");
+            }
+            else {
+                alert("unable to start game: " + data);
             }            
         });
 }
