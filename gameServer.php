@@ -284,18 +284,19 @@ if (isset($_REQUEST['function'])) {
               throw new Exception("No unit with id $unitID exists");
               break;
             }
-            $steps    = $row[0];
-            $unitType = $row[1];
-            $size     = count($path);
-            if ($size - 1 > $steps){
+            $unitType          = $row[1];
+            $unitMoveAllowance = $row[0];
+            $numSteps          = count($path) - 1;
+            if ($numSteps > $unitMoveAllowance){
                 echo json_encode("failure");
                 //error
                 break;
             }
             
+            $stepsLeft = $unitMoveAllowance;
             $validPath = true;
             // validate path
-            for ($i = 1; $i<$size; $i++){
+            for ($i = 1; $i < count($path); $i++){
                 if (!areAdjacent( $path[$i-1][0],
                                   $path[$i-1][1],
                                   $path[$i][0],
@@ -319,8 +320,8 @@ if (isset($_REQUEST['function'])) {
                     //error
                     break;
                 }
-                $steps = $steps - $row[0];
-                if ($steps < 0){
+                $stepsLeft -= $row[0];
+                if ($stepsLeft < 0){
                     $validPath = false;
                     //error
                     break;
@@ -349,20 +350,21 @@ if (isset($_REQUEST['function'])) {
             }
 
             //update unit's entry
-            $final = $path[$size-1];
-            $sth = $dbh->prepare(
-               "UPDATE Units
-                SET    Xloc = ?, Yloc = ?, State = 'tired'
-                WHERE  UnitID = ?"
-            );
-            $sth->execute([$final[0], $final[1], $unitID]);
-            
+            $final = end($path);
             //add move updates for other players
             $action = json_encode(array(
                 'type'   => 'move',
                 'path'   => $path,
                 'target' => $target
             ));
+
+            $dbh->beginTransaction(); // -----------------------------
+            $sth = $dbh->prepare(
+               "UPDATE Units
+                SET    Xloc = ?, Yloc = ?, State = 'tired'
+                WHERE  UnitID = ?"
+            );
+            $sth->execute([$final[0], $final[1], $unitID]);
             $sth = $dbh->prepare(
                "INSERT INTO Updates(GameID, Username, Action)
                 SELECT GameID, Username, ? AS Action
@@ -370,6 +372,7 @@ if (isset($_REQUEST['function'])) {
                 WHERE  GameID = ? AND Username <> ?"
             );
             $sth->execute([$action, $gameID, $username]);
+            $dbh->commit(); // -----------------------------
 
             //if the unit attacks
             if ($target != null) {
@@ -497,9 +500,9 @@ if (isset($_REQUEST['function'])) {
                     if ($row){
                         $modifier = $row[0];
                         $damage
-                            = ceil (($health/2)*$modifier*$attackerDefence)
+                            = ceil(($health/2)*$modifier*$attackerDefence)
                             + rand(0,1);
-                        $attackerHealth = $attackerHealth - $damage;
+                        $attackerHealth -= $damage;
                         if ($attackerHealth <= 0){
                             $attackerHealth = 0;
                             checkPlayerDefeated($dbh,$gameID,$unitID);
@@ -652,7 +655,7 @@ if (isset($_REQUEST['function'])) {
             $sth = $dbh->prepare(
                "SELECT UnitID
                 FROM   Units NATURAL JOIN PlayersGames
-                WHERE  GameID = ? AND Team <> ? AND Health <> '0'"
+                WHERE  GameID = ? AND Team <> ? AND Health <> 0"
             );
             $sth->execute([$gameid,$team]);
 
@@ -722,6 +725,8 @@ if (isset($_REQUEST['function'])) {
 
 // trusting $seqno
 function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
+    $seqno  = intVal(filter_var(trim($seqno),  FILTER_SANITIZE_NUMBER_INT));
+    $gameid = intVal(filter_var(trim($gameid), FILTER_SANITIZE_NUMBER_INT));
     $sth = $dbh->prepare(
        "SELECT SeqNo
         FROM   PlayersGames
