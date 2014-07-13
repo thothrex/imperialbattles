@@ -10,7 +10,8 @@ $dbh = db_connect();
 $sth = $dbh->prepare(
    "SELECT GameName
     FROM   Games
-    WHERE  GameID = ? AND InProgress = true";
+    WHERE  GameID = ? AND InProgress = true"
+);
 $sth->execute([ trim($_POST['gameid']) ]);
 
 $row = $sth->fetch();
