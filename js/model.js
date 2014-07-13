@@ -104,7 +104,7 @@ Model.PLAYER_DEFEATED_URL = '?function=suggestDefeat';
 Model.UNIT_TYPE_NAMES = ['spearman', 'archer', 'lancer'];
 Model.SERVER_UPDATE_MS = 1000;
 Model.TERRAIN_LAYER_NAME = "logic";
-Model.POSTGRESQL_TRUE = 't';
+Model.DATABASE_TRUE = '1';
 
 
 /*******************************************************************************
@@ -124,7 +124,7 @@ Model.prototype.startGame = function () {
             $.each(resumeData.players, $.proxy(function(index, value){
                 this.players[value.seqno] = value;
                 this.players[value.seqno].alive = 
-                    (value.alive === Model.POSTGRESQL_TRUE);
+                    (value.alive === Model.DATABASE_TRUE);
                 this.players[value.seqno].units = new Array();
             }, this) );            
 

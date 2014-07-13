@@ -76,7 +76,7 @@ $gamename = filter_var($row[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             );
             $sth->execute([$username]);
 
-            $row    = $sth->fetch_row();
+            $row    = $sth->fetch();
             $wins   = filter_var($row[0], FILTER_SANITIZE_NUMBER_INT);
             $losses = filter_var($row[1], FILTER_SANITIZE_NUMBER_INT);
             echo "W: <span id='winsLabel'>$wins</span>"

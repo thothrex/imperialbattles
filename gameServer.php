@@ -26,7 +26,7 @@ function checkPlayerDefeated($dbh, $gameID, $unitID){
     $seqNo = $row[0];
     $sth = $dbh->prepare(
        "SELECT COUNT(UnitID)
-        FROM   UNITS
+        FROM   Units
         WHERE  SeqNo = ? AND GameID = ?"
     );
     $sth->execute([$seqNo,$gameID]);
@@ -110,7 +110,7 @@ if (isset($_REQUEST['function'])) {
                 FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
                 WHERE GameID = ? and UserName = ?"
             );
-            $result = $sth->execute([$gameid,$username]);
+            $sth->execute([$gameid,$username]);
 
             $row = $sth->fetch();
             if (!$row) {
@@ -164,7 +164,7 @@ if (isset($_REQUEST['function'])) {
                 break;
             }
 
-            for ($i = 0; $row; $row = $result->fetch(), $i++) {
+            for ($i = 0; $row; $row = $sth->fetch(), $i++) {
                 $units[$i] = array(
                     'unitType' => intVal($row[1]),
                     'owner'    => intVal($row[0]),
@@ -209,7 +209,7 @@ if (isset($_REQUEST['function'])) {
                 endTurnOfPlayer($dbh, $row[2], $gameID, "System");
             }
             $sth = $dbh->prepare(
-               "SELECT   Action
+               "SELECT   Action AS action
                 FROM     Updates
                 WHERE    GameID = ? AND UserName = ?
                 ORDER BY Time ASC"
@@ -226,7 +226,9 @@ if (isset($_REQUEST['function'])) {
             $username = $_SESSION['username'];
             $gameID   = $_REQUEST['gameid'];
             $path     = json_decode($_REQUEST['path']);
-            $target   = json_decode($_REQUEST['target']);
+            $target   = null;
+            if( isset($_REQUEST['target']) )
+                $target = json_decode($_REQUEST['target']);
             
             $initial = $path[0];
 
@@ -238,7 +240,7 @@ if (isset($_REQUEST['function'])) {
                     NATURAL JOIN Maps
                     NATURAL JOIN Units
                 WHERE GameID   = ? AND SeqNo = Turn
-                  AND Xloc     = ? AND -Yloc = ?
+                  AND Xloc     = ? AND Yloc  = ?
                   AND UserName = ? AND State <> 'tired'"
             );
             $sth->execute([$gameID, $initial[0], $initial[1], $username]);
@@ -249,7 +251,6 @@ if (isset($_REQUEST['function'])) {
               //error
               break;
             }
-            $row    = $result;
             $unitID = $row[0];
             $mapID  = $row[1];
             
@@ -690,7 +691,7 @@ function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
         ORDER BY SeqNo ASC"
     );
     $sth->execute([$gameid]);
-    $rows = $sth->fetchAll();
+    $rows = $sth->fetchAll(PDO::FETCH_ASSOC);
     if (!$rows) {
         //error - no such game or no alive plauers
         return json_encode("failure");
@@ -699,13 +700,11 @@ function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
     $noplayers = count($rows);
     $i = 0; // deliberate - propagating
     for (; $i < $noplayers; $i++) {
-        if ($rows[$i]['seqno'] > $seqno) {
-            break;
-        }
+        if ($rows[$i]['SeqNo'] > $seqno) break;
     }
     if ($i === $noplayers) $i = 0; //cycle
     $curTime = isoNow();
-    $turn    = $rows[$i]['seqno'];
+    $turn    = intVal($rows[$i]['SeqNo']);
     $action  = json_encode(array(
       'type' => 'endTurn', 
       'next' => intVal($turn)
@@ -713,8 +712,8 @@ function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
 
     $dbh->beginTransaction(); // -----------------------------
     $query =  'UPDATE Games
-               SET    Turn = ?, LastUpdated = ?';
-    if ($i === 0) $query  .= ', Day = Day + 1';
+               SET    Turn = ?, LastUpdated = ? ';
+    if ($i === 0) $query  .= ', Day = Day + 1 ';
     $query .= 'WHERE  GameID = ?';
     $sth = $dbh->prepare($query);
     $sth->execute([$turn, $curTime, $gameid]);

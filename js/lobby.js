@@ -275,7 +275,7 @@ function startGame() {
             'gameid' : game.gameid
         },
         function(data) {
-            if (data === "success") {
+            if ( data.match("success") ) { //deliberate - errors otherwise
                 loc = "game";
                 document.forms["startGameForm"]["gameid"].value = game.gameid;
                 $("#startGameForm").submit();
