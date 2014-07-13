@@ -1,34 +1,26 @@
 #!/usr/bin/php
 <?php
-
 require_once('config.php');
 
 if (!isset($_SESSION['username']) || !isset($_POST['gameid'])) {
     header("Location: index.php");
     exit;
 }
+$dbh = db_connect();
+$sth = $dbh->prepare(
+   "SELECT GameName
+    FROM   Games
+    WHERE  GameID = ? AND InProgress = true";
+$sth->execute([ trim($_POST['gameid']) ]);
 
-$db_server = db_connect();
-$query = "SELECT GameName FROM Games WHERE GameID = '" 
-                    . filter_string($db_server, $_POST['gameid']) 
-                    . "' and InProgress = true";
-$result = $db_server->query($query);
-if (!$result) {
+$row = $sth->fetch();
+if (!$row) {
     header("Location: lobby.php");
     exit;
-}
-else if($result->num_rows < 1){
-    header("Location: lobby.php");
-    $result->free();
-    exit;
-}
-
-//else continue execution
-$result = $result->fetch_row();
-$gamename = $result[0];
-
-$db_server->close();
+} //else continue execution
+$gamename = filter_var($row[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -51,12 +43,10 @@ $db_server->close();
     <script src="js/gview-support.js"></script>
     <script src="js/gview-units.js"></script>
 
-<?php
-    $db_server = db_connect();
-    $gameid = filter_string($db_server, $_POST['gameid']);
-    echo "<script>var game = {}; game.gameid = " . $gameid . ";</script>";
-    $db_server->close();
-?>
+    <?php
+        $gameid = filter_var(trim($_POST['gameid']), FILTER_SANITIZE_NUMBER_INT);
+        echo "<script>var game = new Object(); game.gameid = $gameid;</script>";
+    ?>
   	
     <noscript>
         This page requires JavaScript. You can either switch to a browser that supports
@@ -65,32 +55,42 @@ $db_server->close();
 </head>
 
 <?php
-    echo "<body onload=\"showGameScreen(" . "'"  . $gamename . "'" . ")\">";
+    echo "<body onload=\"showGameScreen('$gamename')\">";
 ?>
 
 <div id="page">
 
 <div id="logoutScreen">
     <?php
-        echo "<span id='usernameLabel'>" . $_SESSION['username'] . 
-                "</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-        $username = $_SESSION['username'];
-        $db_server = db_connect();
-        $query = "SELECT Wins,Defeats
-                  FROM Players
-                  WHERE UserName = '$username'";
-        $result = $db_server->query($query);
-        $row = $result->fetch_row();
-        echo "W: <span id='winsLabel'>" . $row[0] . 
-                "</span>&nbsp;&nbsp;&nbsp; D: <span id='defeatsLabel'>" 
-                . $row[1] . "</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-        $result->free();
+        $username         = $_SESSION['username'];
+        $filteredUsername = filter_var($username,
+                                       FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        echo "<span id='usernameLabel'>"
+           .  $filteredUsername
+           . "</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 
-        $query = "UPDATE Players
-                  SET LoggedOn = true
-                  WHERE UserName = '$username'";
-        $db_server->query($query);
-        $db_server->close();
+        $sth = $dbh->prepare(
+           "SELECT Wins, Defeats
+            FROM   Players
+            WHERE  UserName = ?"
+        );
+        $sth->execute([$username]);
+
+        $row    = $sth->fetch_row();
+        $wins   = filter_var($row[0], FILTER_SANITIZE_NUMBER_INT);
+        $losses = filter_var($row[1], FILTER_SANITIZE_NUMBER_INT);
+        echo "W: <span id='winsLabel'>$wins</span>"
+           . "&nbsp;&nbsp;&nbsp; "
+           . "D: <span id='defeatsLabel'>$losses</span>"
+           . "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+
+        $sth = $dbh->prepare(
+           "UPDATE Players
+            SET    LoggedOn = true
+            WHERE  UserName = ?"
+        );
+        $sth->execute([$username]);
+        $dbh = null; //close connection
     ?>
     <button type="button" onclick="logout()">Logout</button>
     
