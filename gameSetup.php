@@ -4,6 +4,9 @@ require_once('config.php');
 require_once('time.php');
 // requires DBH to be throwing exceptions on error
 
+//PDO returns error codes as strings
+$SQL_CONSTRAINT_VIOLATION_ERROR = '23000';
+
 if (!isset($GLOBALS['playerColours'])) {
     $GLOBALS['playerColours']
         = ["red","blue","green","white","yellow","cyan","black"];
@@ -52,9 +55,18 @@ if (isset($_REQUEST['function'])) {
                                    HostName,LastUpdated, InProgress)
                  VALUES(?,?,?,?,?,?)"
             );
-            $sth->execute([$gamename, $map,     $playerslimit,
-                                     $username, $curTime, false]);
-
+            try { $sth->execute([$gamename, $map,     $playerslimit,
+                                 $username, $curTime, false]);
+            }
+            catch (Exception $e) {
+                if (get_class($e) === 'PDOException'
+                && $e->getCode()  === $SQL_CONSTRAINT_VIOLATION_ERROR
+                && preg_match("/duplicate entry/i", "{$e->getMessage()}") ) {
+                    echo json_encode('duplicate');
+                    break;
+                }
+                else throw $e;
+            }
             $sth = $dbh->prepare(
                "SELECT GameID AS gameid
                 FROM   Games

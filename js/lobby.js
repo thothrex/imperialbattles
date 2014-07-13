@@ -1,6 +1,7 @@
 // requires chat.js
 
 /* MODEL */
+var SERVER_DUPLICATE_RESPONSE = 'duplicate';
 
 var playername;
 var map;
@@ -131,13 +132,17 @@ function createGame() {
                  'map': '1'
                 },
                 function(result) {
-                    if (result) {
+                    if (result === SERVER_DUPLICATE_RESPONSE){
+                        alert("A game with name '" + gamename + "' already exists");
+                    }
+                    else if (result) {
+                        alert(result);
                         lastUpdated = result[0].lastupdated;
                         setMapGamePlayers(result);
                         switchToHostGameSetup();
                     }
                     else {
-                        alert("A game with name '" + gamename + "' already exists");
+                        alert("Game creation error: " + result);
                     }
                 });
         } 
