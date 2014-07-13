@@ -824,8 +824,8 @@ Model.prototype.performMove = function (begincell, endcell, pathgiven) {
     if(pathgiven === undefined) { pathToUse = path; }
     else { pathToUse = pathgiven; }
 
-    startCell.unit      = null;
-    destCell.unit       = movingUnit;
+    startCell.unit    = null;
+    destCell.unit     = movingUnit;
     movingUnit.xloc   = destCell.xloc; movingUnit.yloc = destCell.yloc;
     this.trigger('moveUnit', pathToCoordList(pathToUse));
 };

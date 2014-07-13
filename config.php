@@ -1,6 +1,6 @@
 <?php
 session_save_path("session");
-ini_set('session.gc_maxlifetime',24 * 60 * 60);
+ini_set('session.gc_maxlifetime', 24 * 60 * 60);
 session_start();
 date_default_timezone_set('Europe/London');
 set_error_handler("php_sql_error");

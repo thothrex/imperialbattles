@@ -66,8 +66,7 @@ function moveChatWindow() {
 
 function resign() {
     var conf = confirm("Are you sure you want to resign? This will count as a defeat.");
-    if (!conf)
-        return;
+    if (!conf) return;
     $.post("gameServer.php",
         {
          'function': 'resign',
@@ -77,9 +76,8 @@ function resign() {
             if (data.match("success")) {
                loc = "lobby";
                window.location='lobby.php';
-            } else {
-                alert("Cannot resign from game.");
             }
+            else { alert("Cannot resign from game: " + data); }
         });
 }
 

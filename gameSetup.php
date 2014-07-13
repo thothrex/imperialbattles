@@ -51,7 +51,7 @@ if (isset($_REQUEST['function'])) {
 
             $dbh->beginTransaction(); // -----------------------------
             $sth = $dbh->prepare(
-                "INSERT INTO Games(GameName,MapID,PlayersLimit,
+                "INSERT INTO Games(GameName,MapID,       PlayersLimit,
                                    HostName,LastUpdated, InProgress)
                  VALUES(?,?,?,?,?,?)"
             );

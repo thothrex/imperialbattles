@@ -165,7 +165,7 @@ if (isset($_REQUEST['function'])) {
             }
 
             $sth = $dbh->prepare(
-               "SELECT SeqNo,UnitType,Xloc,Yloc,State,Health
+               "SELECT SeqNo, UnitType, Xloc, Yloc, State, Health
                 FROM   Units
                 WHERE  GameID = ?"
             );
@@ -191,10 +191,10 @@ if (isset($_REQUEST['function'])) {
             clearUpdates($dbh, $gameid, $username);
 
             $arr = array(
-              'map'     => $map,
-              'game'    => $game,
-              'players' => $players,
-              'units'   => $units
+                'map'     => $map,
+                'game'    => $game,
+                'players' => $players,
+                'units'   => $units
             );
             echo json_encode($arr);
             break;
@@ -443,7 +443,7 @@ if (isset($_REQUEST['function'])) {
                     FROM   Attack
                     WHERE  Attacker = ? AND Defender = ?"
                 );
-                $sth->execute([$unitType,$targetType]);
+                $sth->execute([$unitType, $targetType]);
 
                 $row = $sth->fetch();
                 if (!$row){
@@ -685,8 +685,8 @@ if (isset($_REQUEST['function'])) {
             $dbh->beginTransaction(); // -----------------------------
             $sth = $dbh->prepare(
                "UPDATE Games
-                SET InProgress = false
-                WHERE GameID = ?"
+                SET    InProgress = false
+                WHERE  GameID = ?"
             );
             $sth->execute([$gameid]);
             $sth = $dbh->prepare(
@@ -753,8 +753,8 @@ function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
         return json_encode("failure");
     }
     $action  = json_encode(array(
-      'type' => 'endTurn', 
-      'next' => intVal($turn)
+        'type' => 'endTurn',
+        'next' => $turn
     ));
 
     $dbh->beginTransaction(); // -----------------------------

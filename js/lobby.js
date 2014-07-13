@@ -277,7 +277,7 @@ function startGame() {
     $.post("gameServer.php",
         {
             'function': 'start',
-            'gameid' : game.gameid
+            'gameid'  : game.gameid
         },
         function(data) {
             if ( data.match("success") ) { //deliberate - errors otherwise
