@@ -71,8 +71,8 @@ if (isset($_REQUEST['function'])) {
             $sth->execute([$gameid]);
             $row = $sth->fetch();
             if(!$row) {
-                //error - no such game
                 echo json_encode("failure");
+                throw new Exception("No game #$gameid exists");
                 break;
             }
             $noplayers = $row[0];
@@ -115,7 +115,11 @@ if (isset($_REQUEST['function'])) {
             $row = $sth->fetch();
             if (!$row) {
                 echo json_encode("failure");
-                //error
+                throw new Exception(
+                    "Either no game #$gameid exists, "
+                  . "or user $username does not exist, "
+                  . "or user $username is not in game #$gameid."
+                );
                 break;
             }
             $timeSinceLastUpdate = timeSub(isoNow(), $row[8]);
@@ -169,8 +173,8 @@ if (isset($_REQUEST['function'])) {
 
             $row = $sth->fetch();
             if (!$row) {
-                echo json_encode("failure");
-                //error
+                echo json_encode('failure');
+                throw new Exception("No units in game #$gameid");
                 break;
             }
 
@@ -208,9 +212,9 @@ if (isset($_REQUEST['function'])) {
 
             $row = $sth->fetch();
             if (!$row) {
-              echo json_encode("failure");
-              //error no such game
-              break;
+                echo json_encode("failure");
+                throw new Exception("No game #$gameid exists");
+                break;
             }
 
             $timeSinceLastUpdate = timeSub(isoNow(), $row[0]);
@@ -255,9 +259,13 @@ if (isset($_REQUEST['function'])) {
 
             $row = $sth->fetch();
             if (!$row){
-              echo json_encode("failure");
-              //error
-              break;
+                echo json_encode('failure');
+                throw new Exception(
+                    'No unit returned for input values: '
+                  . "Game $gameID, Player $username, "
+                  . "Location ({$initial[0]}, {$initial[1]})"
+                );
+                break;
             }
             $unitID = $row[0];
             $mapID  = $row[1];
@@ -272,8 +280,8 @@ if (isset($_REQUEST['function'])) {
 
             $row = $sth->fetch();
             if(!$row){
-              echo json_encode("failure");
-              //error
+              echo json_encode('failure');
+              throw new Exception("No unit with id $unitID exists");
               break;
             }
             $steps    = $row[0];
@@ -333,6 +341,10 @@ if (isset($_REQUEST['function'])) {
             }
             if (!$validPath) {
                 echo json_encode("failure");
+                throw new Exception(
+                    'Given an invalid path: '
+                  . $_REQUEST['path']
+                );
                 break;
             }
 
@@ -373,7 +385,10 @@ if (isset($_REQUEST['function'])) {
                 $row = $sth->fetch();
                 if (!$row){
                     echo json_encode("failure");
-                    //error
+                    throw new Exception(
+                        "Either no unit found with UnitID $unitID, "
+                      . "or no map found with MapID $mapID"
+                    );
                     break;
                 }
                 $attackMin       = $row[0];
@@ -385,7 +400,11 @@ if (isset($_REQUEST['function'])) {
                       + abs($final[1] - $target[1]);
                 if ($dist > $attackMax || $dist <= $attackMin) {
                     echo json_encode("failure");
-                    //error
+                    throw new Exception(
+                        "Target ({$target[0]}, {$target[1]}) "
+                      . "is at an invalid distance for unit #$unitID "
+                      . " at ({$final[0]}, {$final[1]})"
+                    );
                     break;
                 }
                 
@@ -402,7 +421,11 @@ if (isset($_REQUEST['function'])) {
                 $row = $sth->fetch();
                 if (!$row){
                     echo json_encode("failure");
-                    //error
+                    throw new Exception(
+                        "No unit found at ({$target[0]}, {$target[1]}) "
+                      . "in game #$gameID that is not owned by "
+                      . 'the player whose turn it currently is'
+                    );
                     break;
                 }
                 $targetID    = $row[0];
@@ -421,9 +444,12 @@ if (isset($_REQUEST['function'])) {
 
                 $row = $sth->fetch();
                 if (!$row){
-                  echo json_encode("failure");
-                  //error
-                  break;
+                    echo json_encode("failure");
+                    throw new Exception(
+                        'No attack modifier entry found for '
+                      . "$unitType vs $targetType"
+                    );
+                    break;
                 }
                 $modifier = $row[0];
                 $damage   = ceil(($attackerHealth/2)*$modifier*$defence)
@@ -521,9 +547,11 @@ if (isset($_REQUEST['function'])) {
 
             $row = $sth->fetch();
             if(!$row){
-              echo json_encode("failure");
-              //error
-              break;
+                echo json_encode("failure");
+                throw new Exception(
+                    "It is not $username's turn in game #$gameid"
+                );
+                break;
             }
             $seqno = $row[0];
             echo endTurnOfPlayer($dbh,$seqno,$gameid,$username);
@@ -618,7 +646,7 @@ if (isset($_REQUEST['function'])) {
             $row = $sth->fetch();
             if (!$row){
                 echo json_encode("failure");
-                //error - cannot find the game or not in progress
+                throw new Exception("No game #$gameid currently in progress");
                 break;
             }
             $sth = $dbh->prepare(
@@ -631,7 +659,9 @@ if (isset($_REQUEST['function'])) {
             $row = $sth->fetch();
             if (!$row){
                 echo json_encode("failure");
-                // error - no units (should be at least one)
+                throw new Exception(
+                    "No units in game #$gameid not on team #$team"
+                );
                 break;
             }
             $sth = $dbh->prepare(
@@ -701,7 +731,7 @@ function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
     $sth->execute([$gameid]);
     $rows = $sth->fetchAll(PDO::FETCH_ASSOC);
     if (!$rows) {
-        //error - no such game or no alive plauers
+        throw new Exception("No alive players in game #$gameid");
         return json_encode("failure");
     }
 
@@ -713,6 +743,10 @@ function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
     if ($i === $noplayers) $i = 0; //cycle
     $curTime = isoNow();
     $turn    = intVal($rows[$i]['SeqNo']);
+    if (!$turn){
+        throw new Exception("Invalid sequence numbers");
+        return json_encode("failure");
+    }
     $action  = json_encode(array(
       'type' => 'endTurn', 
       'next' => intVal($turn)
