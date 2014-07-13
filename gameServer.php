@@ -143,11 +143,21 @@ if (isset($_REQUEST['function'])) {
             );
             $sth->execute([$gameid]);
 
-            $players = $sth->fetchAll();
-            if (!$players || count($players === 0)) {
-                echo json_encode("failure");
-                //error - no such game or no players
+            $row = $sth->fetch(PDO::FETCH_ASSOC);
+            if (!$row) {
+                echo json_encode('failure');
+                throw new Exception("No players in game #$gameid");
                 break;
+            }
+            $players = array();
+            //convert database to javascript format
+            for (; $row; $row = $sth->fetch(PDO::FETCH_ASSOC) ) {
+                $newrow = array();
+                foreach ($row as $key => $value) {
+                    $newkey          = strtolower($key);
+                    $newrow[$newkey] = $value;
+                }
+                $players[] = $newrow; //push $newrow onto $players
             }
 
             $sth = $dbh->prepare(
@@ -216,9 +226,7 @@ if (isset($_REQUEST['function'])) {
             );
             $sth->execute([$gameID,$username]);
 
-            $row = $sth->fetch();
-            echo sqlresult_to_json($sth);
-
+            echo sqlresult_to_json($sth, PDO::FETCH_ASSOC);
             clearUpdates($dbh, $gameID, $username);
             break;
 
