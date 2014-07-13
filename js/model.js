@@ -192,9 +192,13 @@ Model.prototype.callServer = function (url, data) {
         dataType: 'json',
         type: 'POST'
     }).then(function (response) {
-        if (typeof response == 'string' && response.toLowerCase() === "failure")
+        if (typeof response === 'string' && response.toLowerCase() === 'failure')
             throw new Error('Server request failed: ' + url);
-        return response;
+        else if (typeof response === 'string'
+             && response.toLowerCase() !== 'success')
+            throw new Error('Server request ' + url + ' failed: ' + response);
+        else
+            return response;
     }, $.proxy(this.ajaxError, this, url));
 };
 
@@ -241,13 +245,18 @@ Model.prototype.callUpdate = function () {
     this.callServer(Model.UPDATE_URL).then($.proxy(function (events) {
         $.each(events, $.proxy(function (index, tableEntry) {
             var event;
-            if(tableEntry.action !== undefined){
+            if(typeof tableEntry.action !== 'undefined'){
                   event = JSON.parse(tableEntry.action); }
             else{ event = JSON.parse(tableEntry); }
             
             var handler = this['h_'+event.type];
             if (handler) handler.call(this, event);
-            else throw new Error('Unknown server event type: '+event.type);
+            else {
+                throw new Error(
+                    'Unknown server event type: ' + event.type
+                  + ' - server event: ' + event
+                );
+            }
         }, this));
     }, this));
 };
@@ -702,12 +711,18 @@ Model.prototype.endTurn = function () {
 
 Model.prototype.doEndTurn = function (nextPlayer) {
     var oldturn = this.turn;
+    var iterations = 0; //prevent infinite loop on error
     if(nextPlayer === undefined){
         do {
+            iterations++;
             this.turn = (this.turn /* -1 +1*/ % this.numPlayers) + 1;
-        } while(!this.players[this.turn].alive)
+        } while(!this.players[this.turn].alive
+              && iterations < this.numPlayers)
     }
     else { this.turn = nextPlayer; }
+
+    if (iterations >= this.numPlayers)
+        throw new Error("No alive players");
 
     this.trigger('changeTurnTo', this.turn, this.turnTimeout);
     console.log("Changing turn to " + this.turn);
@@ -742,7 +757,24 @@ Model.prototype.startTurn = function () {
        && this.players[this.turn].units !== undefined
        && this.players[this.turn].units.length > 0
        )) {
-        throw new Error("Cannot start player " + this.turn + "\'s turn");
+        throw new Error(
+            "Cannot start player " + this.turn + "\'s turn.\n"
+          + 'this.players is '
+          + (typeof this.players === 'undefined' ? 'NOT ' : '')
+          + "defined.\n"
+          + 'this.players[this.turn] is '
+          + (typeof this.players[this.turn] === 'undefined' ? 'NOT ' : '')
+          + "defined.\n"
+          + 'Player ' + this.turn + ' is '
+          +  (this.players[this.turn].alive ? 'NOT ' : '')
+          + "alive.\n"
+          + 'Player ' + this.turn + ' has '
+          + (typeof this.players[this.turn].units === 'undefined' ? 'NO' : 'a')
+          + " units array.\n"
+          + 'Player ' + this.turn + ' has '
+          + (this.players[this.turn].units.length > 0 ? 'NO ' : '')
+          + "units.\n"
+        );
         return;
     }
 
