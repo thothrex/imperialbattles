@@ -26,26 +26,29 @@ function db_connect() {
 }
 
 function php_sql_error($errno, $errstr, $error_file, $error_line) {
-    $file = fopen("error.log","a");
-    $error = isoNow() . " [$errno] '$errstr' in file: $error_file on line: $error_line\r\n";
-    fwrite($file,$error);
-    fclose($file);
+    $timestamp       = preg_replace('/T/', ' ', isoNow());
+    $justTheFileName = stripDirectories($error_file);
+    $error = "$timestamp [$errno] $justTheFileName line $error_line: "
+           . "$errstr\r\n";
+    error_log($error, 3, 'error.log');
 }
 
 function exceptionHandler($e){
-    $printedError = "\r\n\r\nException:";
+    $timestamp    = preg_replace('/T/', ' ', isoNow());
+    $printedError = "\r\n\r\n$timestamp Exception:";
     if (get_class($e) === 'PDOException') {
-        $printedError
-            .= "\r\nSQL Error: {$e->errorInfo[2]}";
+        $printedError .= "\r\nSQL Error: {$e->errorInfo[2]}";
     }
-    $printedError
-        .= "\r\n{$e->getFile()} at line {$e->getLine()}: {$e->getMessage()}";
+    $fileName      = stripDirectories($e->getFile());
+    $printedError .= "\r\n$fileName line {$e->getLine()}: {$e->getMessage()}";
 
     $cur = $e;
     while ($prev = $cur->getPrevious()){
+        $fileName = stripDirectories($prev->getFile());
         $printedError
             .= "\r\n\tCaused by exception in "
-             . "{$e->getFile()} at line {$e->getLine()}: {$e->getMessage()}";
+             . "$fileName at line {$prev->getLine()}: "
+             . "{$prev->getMessage()}";
         $cur = $prev;
     }
     error_log($printedError, 3, "exceptions.log");
@@ -63,6 +66,10 @@ function sqlresult_to_json($result) {
         $rows[] = $r;
     }
     return json_encode($rows);
+}
+
+function stripDirectories($fileString){
+    return preg_replace('/(?:\w*\/)*([\w.]+)/', "$1", $fileString);
 }
 
 ?>
