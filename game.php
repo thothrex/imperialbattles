@@ -60,63 +60,64 @@ $gamename = filter_var($row[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 ?>
 
 <div id="page">
+    <div id="logoutScreen">
+        <?php
+            $username         = $_SESSION['username'];
+            $filteredUsername = filter_var($username,
+                                           FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            echo "<span id='usernameLabel'>"
+               .  $filteredUsername
+               . "</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 
-<div id="logoutScreen">
-    <?php
-        $username         = $_SESSION['username'];
-        $filteredUsername = filter_var($username,
-                                       FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        echo "<span id='usernameLabel'>"
-           .  $filteredUsername
-           . "</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+            $sth = $dbh->prepare(
+               "SELECT Wins, Defeats
+                FROM   Players
+                WHERE  UserName = ?"
+            );
+            $sth->execute([$username]);
 
-        $sth = $dbh->prepare(
-           "SELECT Wins, Defeats
-            FROM   Players
-            WHERE  UserName = ?"
-        );
-        $sth->execute([$username]);
+            $row    = $sth->fetch_row();
+            $wins   = filter_var($row[0], FILTER_SANITIZE_NUMBER_INT);
+            $losses = filter_var($row[1], FILTER_SANITIZE_NUMBER_INT);
+            echo "W: <span id='winsLabel'>$wins</span>"
+               . "&nbsp;&nbsp;&nbsp; "
+               . "D: <span id='defeatsLabel'>$losses</span>"
+               . "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 
-        $row    = $sth->fetch_row();
-        $wins   = filter_var($row[0], FILTER_SANITIZE_NUMBER_INT);
-        $losses = filter_var($row[1], FILTER_SANITIZE_NUMBER_INT);
-        echo "W: <span id='winsLabel'>$wins</span>"
-           . "&nbsp;&nbsp;&nbsp; "
-           . "D: <span id='defeatsLabel'>$losses</span>"
-           . "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-
-        $sth = $dbh->prepare(
-           "UPDATE Players
-            SET    LoggedOn = true
-            WHERE  UserName = ?"
-        );
-        $sth->execute([$username]);
-        $dbh = null; //close connection
-    ?>
-    <button type="button" onclick="logout()">Logout</button>
-    
-</div>
-
-
-<div id="chatScreen">
-    <h2 id="chatLabel" class="yellow">In-Game Chat Room</h2>
-    <div id="chat-area">
+            $sth = $dbh->prepare(
+               "UPDATE Players
+                SET    LoggedOn = true
+                WHERE  UserName = ?"
+            );
+            $sth->execute([$username]);
+            $dbh = null; //close connection
+        ?>
+        <button type="button" onclick="logout()">Logout</button>
     </div>
-    <form id="messageForm">
-    <textarea id="msg" onKeyDown="if(event.keyCode==13) sendMessage();" 
-          maxlength = '60' cols='60' rows='1'></textarea>
-    </form>
-</div>
-<div id ="buttons2">
-<button class = "green" type="button" onclick="resign()" id="resignButton">Resign</button>
-&nbsp;&nbsp;&nbsp;
-<button class = "green" type="button" onclick="returnToLobby()">Back to Home</button>
-</div>
+    
+    <div id="chatScreen">
+        <h2 id="chatLabel" class="yellow">In-Game Chat Room</h2>
+        <div id="chat-area"></div>
+        <form id="messageForm">
+            <textarea id="msg" maxlength='60' cols='60' rows='1'
+                      onKeyDown="if(event.keyCode==13) sendMessage();">
+            </textarea>
+        </form>
+    </div>
+    <div id ="buttons2">
+        <button class="green" type="button" onclick="resign()" id="resignButton">
+            Resign
+        </button>
+        &nbsp;&nbsp;&nbsp;
+        <button class="green" type="button" onclick="returnToLobby()">
+            Back to Home
+        </button>
+    </div>
 
-<div id = "gameScreen">
-<h2 id="gameLabel" class="yellow"></h2>
-<div id="playground"></div>
-</div>
+    <div id = "gameScreen">
+        <h2 id="gameLabel" class="yellow"></h2>
+        <div id="playground"></div>
+    </div>
 </div>
 </body>
 </html>
