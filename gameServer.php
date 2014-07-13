@@ -607,7 +607,7 @@ if (isset($_REQUEST['function'])) {
             $sth->execute([$gameid]);
 
             $row = $sth->fetch();
-            else if (!$row){
+            if (!$row){
                 echo json_encode("failure");
                 //error - cannot find the game or not in progress
                 break;
@@ -713,9 +713,9 @@ function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
 
     $dbh->beginTransaction(); // -----------------------------
     $query =  'UPDATE Games
-               SET    Turn = ?, LastUpdated = ?'
+               SET    Turn = ?, LastUpdated = ?';
     if ($i === 0) $query  .= ', Day = Day + 1';
-    $query .= 'WHERE  GameID = ?'
+    $query .= 'WHERE  GameID = ?';
     $sth = $dbh->prepare($query);
     $sth->execute([$turn, $curTime, $gameid]);
     $sth = $dbh->prepare(
