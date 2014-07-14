@@ -136,7 +136,6 @@ function createGame() {
                         alert("A game with name '" + gamename + "' already exists");
                     }
                     else if (result) {
-                        alert(result);
                         lastUpdated = result[0].lastupdated;
                         setMapGamePlayers(result);
                         switchToHostGameSetup();
