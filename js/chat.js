@@ -105,7 +105,7 @@ function displayMessages(messages){
         $('#chat-area').scrollTop(position);
 }
 
-function appendChat(s,username) {
+function appendChat(message,username) {
     var i;
     var width = $('#chat-area').width()/8;
     var p;
@@ -114,10 +114,10 @@ function appendChat(s,username) {
     } else {
         p = "<p class='normal'>";
     }
-    for(i = 0; i<s.length-width; i+=width){
-        $('#chat-area').append(p + s.substring(i,i+width) + "</p>");
+    for(i = 0; i < message.length - width; i += width){
+        $('#chat-area').append(p + message.substring(i,i+width) + "</p>");
     }
-    $('#chat-area').append(p + s.substring(i) + "</p>");
+    $('#chat-area').append(p + message.substring(i) + "</p>");
 }
 
 function moveScrollbarToBottom() {

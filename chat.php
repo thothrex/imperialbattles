@@ -9,7 +9,7 @@ if (!isset($_SESSION['username'])) {
 
 if (isset($_REQUEST['function'])) {
     $db_server = db_connect();
-    $function = $_REQUEST['function'];
+    $function  = $_REQUEST['function'];
 
     switch($function) {
         case('fetch'):

@@ -622,7 +622,7 @@ if (isset($_REQUEST['function'])) {
             break;
 
         case('gameover'):
-            $gameid = $_POST['gameid'];
+            $gameid   = $_POST['gameid'];
             $username = $_SESSION['username'];
                         
             $sth = $dbh->prepare(

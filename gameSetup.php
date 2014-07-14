@@ -97,7 +97,7 @@ if (isset($_REQUEST['function'])) {
               ORDER BY SeqNo ASC"
             );
             $result = $sth->execute([$gameID]);
-            echo sqlresult_to_json($sth);
+            echo sqlresult_to_json($sth, PDO::FETCH_ASSOC);
             break;
 
         case ('join'):
