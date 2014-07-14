@@ -226,7 +226,7 @@ if (isset($_REQUEST['function'])) {
                "SELECT   Action AS action
                 FROM     Updates
                 WHERE    GameID = ? AND UserName = ?
-                ORDER BY Time ASC"
+                ORDER BY Time, UpdateID ASC"
             );
             $sth->execute([$gameID,$username]);
 
@@ -360,18 +360,18 @@ if (isset($_REQUEST['function'])) {
 
             $dbh->beginTransaction(); // -----------------------------
             $sth = $dbh->prepare(
-               "UPDATE Units
-                SET    Xloc = ?, Yloc = ?, State = 'tired'
-                WHERE  UnitID = ?"
-            );
-            $sth->execute([$final[0], $final[1], $unitID]);
-            $sth = $dbh->prepare(
                "INSERT INTO Updates(GameID, Username, Action)
                 SELECT GameID, Username, ? AS Action
                 FROM   PlayersGames
                 WHERE  GameID = ? AND Username <> ?"
             );
             $sth->execute([$action, $gameID, $username]);
+            $sth = $dbh->prepare(
+               "UPDATE Units
+                SET    Xloc = ?, Yloc = ?, State = 'tired'
+                WHERE  UnitID = ?"
+            );
+            $sth->execute([$final[0], $final[1], $unitID]);
             $dbh->commit(); // -----------------------------
 
             //if the unit attacks
