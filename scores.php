@@ -17,8 +17,7 @@ $query = "SELECT UserName AS username,
           LIMIT 20";
 $result = $dbh->query($query);
 
-if ($result) echo sqlresult_to_json($result, PDO::FETCH_ASSOC);
-else throw new Exception("No non-system players");
+echo sqlresult_to_json($result, PDO::FETCH_ASSOC);
 
 $dbh = null; //close connection
 ?>
