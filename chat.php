@@ -13,7 +13,7 @@ if (isset($_REQUEST['function'])) {
 
     switch($function) {
         case('fetch'):
-            $gameID = strval($_GET['gameid']);
+            $gameID = $_GET['gameid'];
             $sth = $db_server->prepare(
                "SELECT Time     AS time,
                        UserName AS username,
@@ -28,7 +28,7 @@ if (isset($_REQUEST['function'])) {
             break;
         
         case('update'):
-            $gameID    = strval($_GET['gameid']);
+            $gameID    = $_GET['gameid'];
             $timestamp = $_GET['timestamp'];
 
             $query =
@@ -53,7 +53,7 @@ if (isset($_REQUEST['function'])) {
             break;
 
         case('send'):
-            $gameID   = strval($_POST['gameid']);
+            $gameID   = $_POST['gameid'];
             $username = $_SESSION['username'];
             $message  = $_POST['message'];
 
