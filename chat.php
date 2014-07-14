@@ -55,7 +55,8 @@ if (isset($_REQUEST['function'])) {
         case('send'):
             $gameID   = $_POST['gameid'];
             $username = $_SESSION['username'];
-            $message  = $_POST['message'];
+            $message  = filter_var($_POST['message'],
+                                   FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $sth = $db_server->prepare(
                "INSERT INTO Messages(GameID, UserName, Message)
