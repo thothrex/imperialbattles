@@ -20,7 +20,7 @@ if (isset($_REQUEST['function'])) {
                        Message  AS message
                 FROM Messages
                 WHERE GameID = ?
-                ORDER BY Time ASC
+                ORDER BY Time, MessageID ASC
                 LIMIT 60"
             );
             $sth->execute([$gameID]);
@@ -40,12 +40,12 @@ if (isset($_REQUEST['function'])) {
             $result; $sth;
             if ($timestamp) {
                 $query .= " AND Time > ?
-                            ORDER BY Time ASC";
+                            ORDER BY Time, MessageID ASC";
                 $sth    = $db_server->prepare($query);
                 $sth->execute([$gameID, $timestamp]);
             }
             else {
-                $query .= " ORDER BY Time ASC";
+                $query .= " ORDER BY Time, MessageID ASC";
                 $sth    = $db_server->prepare($query);
                 $sth->execute([$gameID]);
             }
