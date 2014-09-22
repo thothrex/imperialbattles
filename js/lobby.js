@@ -208,7 +208,10 @@ function deleteGame() {
 
 function joinGame() {
     if (!popup) {
-	    var gameid = (document.forms["serverForm"]["server"].value).substring(1);
+        var selectedGame = document.forms["serverForm"]["server"].value;
+        if (typeof selectedGame === 'undefined') return;
+
+	    var gameid = selectedGame.substring(1);
 	    $.post("gameSetup.php",
         {
          'function': 'join',
