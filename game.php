@@ -36,7 +36,6 @@ $gamename = filter_var($row[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     <script src="js/jquery.cookie.js"></script>
     <script src="js/json2.js"></script>
     <script src="js/login.js"></script>
-  	<script src="js/chat.js"></script>
   	<script src="js/game.js"></script>
     <script src="js/utility.js"></script>
     <script src="js/model.js"></script>
@@ -95,15 +94,8 @@ $gamename = filter_var($row[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         <button type="button" onclick="logout()">Logout</button>
     </div>
     
-    <div id="chatScreen">
-        <h2 id="chatLabel" class="yellow">In-Game Chat Room</h2>
-        <div id="chat-area"></div>
-        <form id="messageForm">
-            <textarea id="msg" maxlength='60' cols='60' rows='1'
-                      onKeyDown="if(event.keyCode==13) sendMessage();">
-            </textarea>
-        </form>
-    </div>
+    <?php include "chat.html"; ?>
+
     <div id ="buttons2">
         <button class="green" type="button" onclick="resign()" id="resignButton">
             Resign

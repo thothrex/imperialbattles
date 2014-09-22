@@ -17,7 +17,6 @@ if (!isset($_SESSION['username'])) {
     <script src="js/jquery-1.10.1.min.js"></script>
     <script src="js/jquery.cookie.js"></script>
     <script src="js/login.js"></script>
-	<script src="js/chat.js"></script>
 	<script src="js/lobby.js"></script>
     <noscript>
         This page requires JavaScript. You can either switch to a browser that supports
@@ -63,14 +62,7 @@ if (!isset($_SESSION['username'])) {
 </table>
 </div>
 
-<div id="chatScreen">
-<h2 id="chatLabel" class="yellow">Pre-Game Chat Room</h2>
-<div id="chat-area">
-</div>
-<form id="messageForm">
-<textarea id="msg" onKeyDown="if(event.keyCode==13) sendMessage();" maxlength = '60' cols='60' rows='1'></textarea>
-</form>
-</div>
+<?php include "chat.html"; ?>
 
 
 <div id="gameSelectionScreen">

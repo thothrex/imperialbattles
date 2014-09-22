@@ -1,0 +1,11 @@
+<script src="js/chat.js"></script>
+
+<div id="chatScreen">
+    <h2 id="chatLabel" class="yellow">Chat Room</h2>
+    <div id="chat-area"></div>
+    <form id="messageForm">
+        <textarea id="msg" maxlength='60' cols='60' rows='1'
+                  onKeyDown="if(event.keyCode==13) sendMessage();">
+        </textarea>
+    </form>
+</div>
