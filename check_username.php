@@ -7,7 +7,7 @@ if (isset($_POST['username'])) {
     $username  = $_POST['username'];
 
     $sth = $dbh->prepare("SELECT * FROM Players WHERE UserName = ?");
-    $sth->execute($username);
+    $sth->execute([$username]);
 
     if (!$sth->fetch()) { echo "Available."; }
     else                { echo "Taken.";     }
