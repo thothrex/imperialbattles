@@ -54,9 +54,6 @@ function login() {
         },
         function(data) {
             if (data.match("true")) {
-                if (document.forms["loginForm"]["remember"].checked) {
-                    setCookie(user,pass);
-                }
 				location.reload();
             } else {
                 $("#loginStatusLabel").text(data);
