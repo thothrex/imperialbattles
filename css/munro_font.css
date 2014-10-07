@@ -1,0 +1,29 @@
+/*
+ * "Munro" font Copyright © 2007 - 2013 Ten by Twenty.
+ * http://tenbytwenty.com/products/typefaces/munro/
+ *
+ * Distributed under the SIL Open Font License (OFL) 1.1
+ * http://scripts.sil.org/cms/scripts/page.php?item_id=OFL_web
+ */
+
+@font-face {
+    font-family: "Munro";
+    font-weight: normal;
+    font-style: normal;
+    src: url("../fonts/munro/Munro.ttf");
+}
+
+@font-face {
+    font-family: "Munro Small";
+    font-weight: normal;
+    font-style: normal;
+    font-variant: all-small-caps;
+    src: url("../fonts/munro/MunroSmall.ttf");
+}
+
+@font-face {
+    font-family: "Munro Narrow";
+    font-weight: lighter;
+    font-style: normal;
+    src: url("../fonts/munro/MunroNarrow.ttf");
+}
