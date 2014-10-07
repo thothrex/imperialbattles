@@ -12,8 +12,8 @@ if (isset($_SESSION['username'])) {
 <head>
     <title>IMPERIAL BATTLES - Login</title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <?php include_once "common.html"; ?>
     <link rel="stylesheet" type="text/css" href="css/login.css" />
-    <script src="js/jquery-1.10.1.min.js"></script>
     <script src="js/jquery.cookie.js"></script>
     <script src="js/login.js"></script>
     <noscript>
