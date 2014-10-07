@@ -216,13 +216,13 @@ if (isset($_SESSION['username'])) {
 </footer>
 
 <div id="story" class="popup">
-    <h1 class="pixel-title">Story</h1>
+    <h1>Story</h1>
     <?php include_once("story.html"); ?>
     <br />
     <button type="button" onclick="hideStory()">Close</button>
 </div>
 <div id="rules" class="popup">
-    <h1 class="pixel-title">How to play</h1>
+    <h1>How to play</h1>
     <?php include_once("rules.html"); ?>
     <br />
     <button type="button" onclick="hideRules()">Close</button>

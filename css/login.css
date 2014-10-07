@@ -1,4 +1,5 @@
 @import "munro_font.css";
+@import "green_screen_font.css";
 
 html  {
     min-height:100%;
@@ -165,6 +166,11 @@ background-image: -webkit-gradient(radial, center center, 0, center center, 487,
 
 img {
     margin: 2px;
+}
+
+div#story, div#rules {
+    font-family: "Green Screen", serif;
+    font-size: 0.625em;
 }
 
 footer {
