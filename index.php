@@ -5,7 +5,7 @@ require_once('config.php');
 if (isset($_SESSION['username'])) {
     header("Location: lobby.php");
     exit;
-} 
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -28,163 +28,204 @@ if (isset($_SESSION['username'])) {
         <br />
         <img id="logo" src="img/logo.png" alt="logo" />
         <br />
-        <br />
-        <br />
-        <br />
-        <a href="#"><img src="img/story.png" alt="story" onclick="popUpStory()" /></a>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <a href="#"><img src="img/rules.png" alt="rules" onclick="popUpRules()" /></a>
     </div>
 
-    <div id="story" class="popup">
-        <h1 class="yellow">Story</h1>
-        <?php include_once("story.html"); ?>
-        <br />
-        <button type="button" onclick="hideStory()">Close</button>
-    </div>
-    <div id="rules" class="popup">
-        <h1 class="yellow">How to play</h1>
-        <?php include_once("rules.html"); ?>
-        <br />
-        <button type="button" onclick="hideRules()">Close</button>
-    </div>
-
+    <br />
+    <br />
 
     <div id="loginScreen">
         <div id="loginContainer">
             <form id="loginForm">
-                <table cellspacing="4">
-                    <tr>
-                        <td>User name:</td>
-                        <td><input type="text" name="username" onKeyDown="if (event.keyCode==13) login();" required/></td>
-                    </tr>
-                    <tr>
-                        <td>Password:</td>
-                        <td><input type="password" name="password" onKeyDown="if (event.keyCode==13) login();" required/></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2"><input type="checkbox" name="remember" />Remember me</td>
-                    </tr>
-                    <tr>
-                        <td> </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2"><button type="button" onclick="login()">Login</button></td>
-                    </tr>
-                </table>
+                <div id="loginTable">
+                    <div class="row">
+                        <input class="col-sm-6 col-sm-offset-3"
+                               type="text" name="username" required
+                               onKeyDown="if (event.keyCode==13) login();"
+                               placeholder="Username" />
+                    </div>
+                    <div class="row">
+                        <input class="col-sm-6 col-sm-offset-3"
+                               type="password" name="password" required
+                               onKeyDown="if (event.keyCode==13) login();"
+                               placeholder="Password" />
+                    </div>
+                    <div class="row button-row">
+                        <button class="col-sm-6 col-sm-offset-3"
+                                type="button" id="login-button"
+                                onclick="login()">
+                            Login
+                        </button>
+                        <!--
+                        <span id="rememberme-text" class="col-sm-3">
+                            <input type="checkbox" name="remember" />
+                            Remember me
+                        </span>
+                        -->
+                    </div>
+                    <div class="row button-row">
+                        <button type="button"
+                                class="col-sm-6 col-sm-offset-3 login-option"
+                                onclick="showRegisterForm()">
+                            Register
+                        </button>
+                    </div>
+                    <div class="row button-row">
+                        <button type="button"
+                                class="col-sm-6 col-sm-offset-3 login-option"
+                                onclick="showForgotPassForm()">
+                            Forgot password
+                        </button>
+                    </div>
+                </div>
             </form>
             <div id="loginStatusLabel">&nbsp;</div>
             <br />
-            <table cellspacing="5">
-                <tr>
-                    <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-                    <td><button type="button" onclick="showRegisterForm()">Register</button></td>
-                    <td></td><td></td>
-                    <td><button type="button" onclick="showForgotPassForm()">Forgot password</button></td>
-                </tr>
-            </table>
+            <div class="row">
+                <a href="#"><img src="img/story.png" alt="story" onclick="popUpStory()" /></a>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="#"><img src="img/rules.png" alt="rules" onclick="popUpRules()" /></a>
+            </div>
         </div>
 
         <div id="registerContainer">
-        <form id="registerForm">
-            <table cellspacing="4">
-                <tr>
-                    <td>User name:</td>
-                    <td><input type="text" name="username" onchange="checkUserName()" required/></td>
-                    <td><span id="userNameStatus"></span></td>
-                </tr>
-                <tr>
-                    <td>E-mail:</td>
-                    <td><input type="text" name="email" required/></td>
-                </tr>
-                <tr>
-                    <td>Re-type e-mail:</td>
-                    <td><input type="text" name="confirmemail" required/></td>
-                </tr>
-                <tr>
-                    <td>Password:</td>
-                    <td><input type="password" name="password" required/></td>
-                </tr>
-                <tr>
-                    <td>Re-type password:</td>
-                    <td><input type="password" name="confirmpassword"  onKeyDown="if (event.keyCode==13) register();" required/></td>
-                </tr>
-                <tr>
-                    <td> </td>
-                </tr>
-                <tr>
-                    <td colspan="2"><button type="button" onclick="register()">Register</button></td>
-                </tr>
-            </table>
-        </form>
-        <div id="registerStatusLabel">&nbsp;</div>
-        <br />
-        <table>
-            <tr>
-                <td colspan="2"><button type="button" onclick="showLoginForm()">Back</button></td>
-            </tr>
-        </table>
-    </div>
+            <form id="registerForm">
+                <div class="row">
+                    <span class="register-caption pixel-title">User name:</span>
+                    <input class="col-sm-5 col-xs-11"
+                           type="text" name="username" onchange="checkUserName()" required/>
+                    <span class="col-sm-2 status-caption"
+                          id="userNameStatus"></span>
+                </div>
+                <div class="row">
+                    <span class="register-caption pixel-title">E-mail:</span>
+                    <input class="col-sm-5 col-xs-11"
+                           type="text" name="email" required/>
+                </div>
+                <div class="row">
+                    <span class="register-caption pixel-title">Re-type e-mail:</span>
+                    <input class="col-sm-5 col-xs-11"
+                           type="text" name="confirmemail" required/>
+                </div>
+                <div class="row">
+                    <span class="register-caption pixel-title">Password:</span>
+                    <input class="col-sm-5 col-xs-11"
+                           type="password" name="password" required/>
+                </div>
+                <div class="row">
+                    <span class="register-caption pixel-title">Re-type password:</span>
+                    <input class="col-sm-5 col-xs-11"
+                           type="password" name="confirmpassword" required
+                           onKeyDown="if (event.keyCode==13) register();"/>
+                </div>
+                <div class="row button-row">
+                    <button type="button" onclick="register()">
+                        Register
+                    </button>
+                </div>
+            </form>
+            <div id="registerStatusLabel">&nbsp;</div>
+            <div class="row">
+                <button type="button" onclick="showLoginForm()">
+                    Back
+                </button>
+            </div>
+            <br />
+        </div>
 
-    <div id="forgotPassContainer">
-        <form id="sendCodeForm">
-            <table cellspacing="4">
-                <tr>
-                    <td>User name:</td>
-                    <td><input type="text" name="username" required/></td>
-                </tr>
-                <tr>
-                    <td>E-mail:</td>
-                    <td><input type="text" name="email" required/></td>
-                </tr>
-                <tr>
-                    <td> </td>
-                </tr>
-                <tr>
-                    <td colspan="2"><button type="button" onclick="sendActivationCode()">Send Activation Code</button></td>
-                </tr>
-            </table>
-        </form>
-        <br />
-        <br />
-        <form id="resetPasswordForm">
-            <table>
-                <tr>
-                    <td>Activation Code:</td>
-                    <td><input type="text" name="code" required/></td>
-                </tr>
-                <tr>
-                    <td>New Password:</td>
-                    <td><input type="password" name="password" required/></td>
-                </tr>
-                <tr>
-                    <td>Re-type New Password:</td>
-                    <td><input type="password" name="confirmpassword" required/></td>
-                </tr>
-                <tr>
-                    <td> </td>
-                </tr>
-                <tr>
-                    <td colspan="2"><button type="button" onclick="resetPassword()">Reset Password</button></td>
-                </tr>
-            </table>
-        </form>
-        <div id="forgotPassStatusLabel">&nbsp;</div>
-        <br />
-        <table>
-            <tr>
-                <td colspan="2"><button type="button" onclick="showLoginForm()">Back</button></td>
-            </tr>
-        </table>
+        <div id="forgotPassContainer">
+            <form id="sendCodeForm">
+                <div class="row">
+                    <span class="recoverpassword-caption pixel-title">User name:</span>
+                    <input class="col-sm-5 col-xs-11"
+                           type="text" name="username" required/>
+                </div>
+                <div class="row">
+                    <span class="recoverpassword-caption pixel-title">E-mail:</span>
+                    <input class="col-sm-5 col-xs-11"
+                           type="text" name="email" required/>
+                </div>
+                <div class="row button-row">
+                    <span class="recoverpassword-caption">&nbsp;</span>
+                    <span class="col-sm-5 col-xs-11">
+                        <button type="button" class="recoverpassword-button" onclick="sendActivationCode()">
+                            Send Activation Code
+                        </button>
+                    </span>
+                </div>
+            </form>
+            <br />
+            <br />
+            <form id="resetPasswordForm">
+                <div class="row">
+                    <span class="recoverpassword-caption pixel-title">Activation Code:</span>
+                    <input class="col-sm-5 col-xs-11"
+                           type="text" name="code" required/>
+                </div>
+                <div class="row">
+                    <span class="recoverpassword-caption pixel-title">New Password:</span>
+                    <input class="col-sm-5 col-xs-11"
+                           type="password" name="password" required/>
+                </div>
+                <div class="row">
+                    <span class="recoverpassword-caption pixel-title">Re-type New Password:</span>
+                    <input class="col-sm-5 col-xs-11"
+                           type="password" name="confirmpassword" required/>
+                </div>
+                <div class="row button-row">
+                    <span class="recoverpassword-caption">&nbsp;</span>
+                    <span class="col-sm-5 col-xs-11">
+                        <button type="button" class="recoverpassword-button" onclick="resetPassword()">
+                            Reset Password
+                        </button>
+                    </span>
+                </div>
+            </form>
+            <div id="forgotPassStatusLabel">&nbsp;</div>
+            <div class="row">
+                <button type="button" onclick="showLoginForm()">
+                    Back
+                </button>
+            </div>
+            <br />
+        </div>
+    </div>
+    <br />
+    <div id="screenshots">
+        <h3 class="pixel-title">Screenshots</h3>
+        <div class="row">
+            <a href="#">
+                <img class="border" src="img/preview1.jpg" alt="1" width="120" height = "80" onclick="preview('1')"/>
+            </a>
+            <a href="#">
+                <img class="border" src="img/preview2.jpg" alt="2" width="120" height = "80" onclick="preview('2')"/>
+            </a>
+        </div>
+        <div class="row">
+            <a href="#">
+                <img class="border" src="img/preview3.jpg" alt="3" width="120" height = "80" onclick="preview('3')"/>
+            </a>
+            <a href="#">
+                <img class="border" src="img/preview4.jpg" alt="4" width="120" height = "80" onclick="preview('4')"/>
+            </a>
+        </div>
     </div>
 </div>
 
-<div id="screenshots">
-    <a href="#"><img class="border" src="img/preview1.jpg" alt="1" width="120" height = "80" onclick="preview('1')"/></a>&nbsp;&nbsp;
-    <a href="#"><img class="border" src="img/preview2.jpg" alt="2" width="120" height = "80" onclick="preview('2')"/></a>&nbsp;&nbsp;
-    <a href="#"><img class="border" src="img/preview3.jpg" alt="3" width="120" height = "80" onclick="preview('3')"/></a>&nbsp;&nbsp;
-    <a href="#"><img class="border" src="img/preview4.jpg" alt="4" width="120" height = "80" onclick="preview('4')"/></a>
-    <h3 class="yellow">Screenshots</h3>
+<footer class="row">
+    <?php include "copyright_info_string.html" ?>
+</footer>
+
+<div id="story" class="popup">
+    <h1 class="pixel-title">Story</h1>
+    <?php include_once("story.html"); ?>
+    <br />
+    <button type="button" onclick="hideStory()">Close</button>
+</div>
+<div id="rules" class="popup">
+    <h1 class="pixel-title">How to play</h1>
+    <?php include_once("rules.html"); ?>
+    <br />
+    <button type="button" onclick="hideRules()">Close</button>
 </div>
 
 <div id="preview" class="popup">
@@ -193,4 +234,5 @@ if (isset($_SESSION['username'])) {
 <img src="img/bg_blur.jpg" alt="blur" style="display:none" />
 
 </body>
+
 </html>

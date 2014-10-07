@@ -1,80 +1,148 @@
-html 
-{
+@import "munro_font.css";
+
+html  {
     min-height:100%;
-    background: url('../img/bg.jpg') no-repeat center center fixed; 
+    background: url('../img/bg.jpg') no-repeat center center fixed;
     -webkit-background-size: 100% 100%;
     -moz-background-size: 100% 100%;
     -o-background-size: 100% 100%;
     background-size: 100% 100%;
 }
 
-body
-{
+body {
     text-align:center;
     min-height:100%;
     background-color: rgba(0,0,0,0);
+    font-family: "Munro", sans-serif;
+    font-weight: normal;
+    font-size: 2em;
+    color: black;
 }
 
-input[type="text"],input[type="password"]
-{
-    width:200px;
-    display:block;
-    color:white;
-    background-color:#545454;
-    border:1px solid black;
+input[type="text"],input[type="password"] {
+    padding-left: 10px;
+    margin-top: 7px;
+
+    border: 1px solid black;
+    background-color: rgba(66,66,66,0.75);
+    color: white;
 }
 
-.yellow
-{
-    color:yellow;
-    font-variant:small-caps;
-    font-weight:bold;
-    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+#loginTable input[type="text"], #loginTable input[type="password"]{
+    background-color: rgba(230,230,200,1);
+    color: black;
 }
 
-.border
-{
+button {
+    color: #DEDEDE;
+    background-color: rgba(84,84,84,1); /* #545454 */
+    border-color: #424242;
+}
+button:hover {
+    background-color: #666666;
+    border-color: #595959;
+}
+
+button.recoverpassword-button {
+    float: left;
+}
+
+button.login-option {
+    border-width: 1px;
+    color: #A8A8A8;
+}
+
+button#login-button {
+    background-color: #F0DB37;
+    border-color: #BFAA0B;
+    color: black;
+}
+button#login-button:hover {
+    background-color: #FFF180;
+    border-color: #CCBB3D;
+}
+
+form#loginForm {
+    margin: auto;
+}
+
+table#loginNavigation {
+    margin: auto;
+    padding: 0;
+}
+
+div.button-row {
+    margin-top: 7px;
+    margin-bottom: 7px;
+}
+
+span.login-caption {
+    text-align: right;
+    color: yellow;
+    float: left;
+    width: 100px;
+}
+
+span.register-caption {
+    float: left;
+    width: 150px;
+    margin-right: 2px;
+    text-align: right;
+    color: yellow;
+}
+
+span.recoverpassword-caption {
+    float: left;
+    width: 200px;
+    margin-right: 2px;
+    text-align: right;
+    color: yellow;
+}
+
+span.status-caption {
+    margin-top: 7px;
+}
+
+#rememberme-text {
+    color: #C9C9C9;
+    font-family: "Munro Small", sans-serif;
+    font-size: 0.65em;
+}
+
+.pixel-title {
+    font-family: "Munro Small", sans-serif;
+}
+
+.border {
     border: 1px solid black;
 }
 
-#page
-{
+#page {
     position:relative;
     margin:auto;
-    width:1600px;
-    height:800px;
+    width: 400px;
 }
 
-#loginScreen
-{
-    position:absolute;
+#loginScreen {
     top:45%;
-    left:40%;
-    color:yellow;
-    font-variant:small-caps;
-    font-weight:bold;
-    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
 	display:none;
 }
 
-#registerContainer, #forgotPassContainer
-{
+#registerContainer, #forgotPassContainer {
+    margin:auto;
     display:none;
 }
 
-#loginStatusLabel, #registerStatusLabel, #forgotPassStatusLabel
-{
+#loginStatusLabel, #registerStatusLabel, #forgotPassStatusLabel {
     color:#FF4A36;
     text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 }
 
-#images
-{
+#images {
     display:none;
 }
 
-div.popup
-{
+div.popup {
     display:none;
     width: 50%;
     position:absolute;
@@ -90,13 +158,20 @@ background-image: -webkit-gradient(radial, center center, 0, center center, 487,
 	-webkit-border-radius:4px;
 }
 
-#screenshots
-{
+#screenshots {
     text-align:center;
-    width:600px;
-    position:relative;
-    top:380px;
-    left:32%;
     display:none;
 }
 
+img {
+    margin: 2px;
+}
+
+footer {
+    margin-top: 10px;
+    font-size: 0.5em;
+}
+
+footer a {
+    color: gray;
+}
