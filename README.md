@@ -20,6 +20,10 @@ A webserver setup you are comfortable with. XAMPP is recommended as it was the d
 
 Your privateInfo.ini file must be updated on the server to represent the new host address and database password. Make sure the db passwword is a good one! The .htaccess file included prevents access to this .ini file, but it is your job to ensure this is reflected in the server's actual access permissions.
 
+The sql/ folder is just for setup purposes. It doesn't matter if this is public or not, but it doesn't need to be uploaded to the server.
+
+All other files should go under your server's public access directory (e.g. htdocs, public_html, www, etcetera). The directory structure needs to be maintained as-is.
+
 ## Built With
 
 * [jQuery](https://jquery.com/) - JavaScript web-dev standard library
