@@ -2,11 +2,12 @@
 <?php
 require_once('config.php');
 
-$ini = parse_ini_file('privateInfo.ini');
-$admin_user = $ini['AdminUserName'];
+$private_ini = load_private_ini();
+$admin_user = $private_ini['AdminUserName'];
 if (!isset($_SESSION['username']) || $_SESSION['username'] != $admin_user) 
     die ("<h1>Unauthorised access</h1>");
 
+$config_ini = load_config_ini();
 if ($_POST) {
     $db_server = db_connect();
 
@@ -150,6 +151,7 @@ if ($_POST) {
 
 
     /* Create the initial game needed for the chat module. */
+    // Throws an exception if the game already exists (caught by the try/catch block below)
     } else if (isset($_POST['game'])) {
 
         $query = "INSERT INTO Games(GameName,MapID,InProgress) VALUES('idle',1,false)";
@@ -166,18 +168,17 @@ if ($_POST) {
 
     /* Execute all queries. */
     echo "<p>EXECUTED: " . $query . "</p>";
-    $result = $db_server->query($query);
-    if (!$result)
-        echo "<p>FAILED: " . $db_server->error . "</p>";
-    else {
+    try {
+        $result = $db_server->query($query);
         echo "<p>SUCCESS</p>";
-    }        
-    
-    $db_server->close();    
-
-    echo "<br /><br /><button type='button' onclick=window.location='admin.php'>Back</button>";
-
-
+    }
+    catch (Exception $e) {
+        echo "<p>FAILED: " . $e->getMessage() . "</p>";
+    }
+    finally {
+        $db_server = null; // close the connection
+        echo "<br /><br /><button type='button' onclick=window.location='admin.php'>Back</button>";
+    }
 } else {
     echo file_get_contents("admin.html");
 }

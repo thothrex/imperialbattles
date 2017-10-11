@@ -10,11 +10,14 @@ These instructions will get you a copy of the project up and running on your loc
 2. Create a new mysql database
 3. Run the SQL queries in /sql on the new database
 4. Fill out the privateInfo.ini file with the necessary information
-5. Start the webserver (the easiest way is to go into the XAMPP install folder, then run xampp-control)
+5. Fill out the ServerConfig.ini file
+6. Start the webserver (the easiest way is to go into the XAMPP install folder, then run xampp-control)
 
 ### Prerequisites
 
-A webserver setup you are comfortable with. XAMPP is recommended as it was the development testing environment. Your webserver will need to support PHP and a relational database which is supported by PDOs (see http://php.net/manual/en/pdo.drivers.php).
+A webserver setup you are comfortable with. XAMPP is recommended as it was the development testing environment. If you are not using Apache, you will need to convert some files (such as .htaccess) to the format your server supports.
+
+Your webserver will need to support PHP and a relational database which is supported by PDOs (see http://php.net/manual/en/pdo.drivers.php).
 
 ## Deployment
 

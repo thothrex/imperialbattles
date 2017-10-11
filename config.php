@@ -9,14 +9,24 @@ set_exception_handler("exceptionHandler");
 require_once('lib/password.php'); //backports password_hash from PHP 5.5
 require_once('time.php');
 
+function load_private_ini() {
+    return parse_ini_file('privateInfo.ini'); //holds DB user/password etc.
+}
+
+function load_config_ini() {
+    return parse_ini_file('ServerConfig.ini'); // holds per-vendor info for database
+}
+
 function db_connect() {
-    $ini         = parse_ini_file('privateInfo.ini'); //holds DB user/password etc.
-    $domain_name = $ini['dbDomain'];
-    $db_name     = $ini['dbName'];
-    $dsn         = "mysql:dbname=$db_name;host=$domain_name";
+    $priv_ini    = load_private_ini();
+    $domain_name = $priv_ini['dbDomain'];
+    $db_name     = $priv_ini['dbName'];
+    $cfg_ini     = load_config_ini();
+    $db_type     = $cfg_ini['dbType']; //mysql
+    $dsn         = "$db_type:dbname=$db_name;host=$domain_name";
     $dbh;
     try {
-        $dbh = new PDO($dsn, $ini['dbUsername'], $ini['dbPassword']);
+        $dbh = new PDO($dsn, $priv_ini['dbUsername'], $priv_ini['dbPassword']);
         $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
     catch (PDOException $e) {
