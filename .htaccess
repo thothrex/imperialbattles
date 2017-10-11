@@ -6,7 +6,7 @@ RewriteRule .* https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 Header add Strict-Transport-Security "max-age=157680000"
 
-<FilesMatch "^privateInfo.ini$|^\.htaccess$|\.log$">
+<FilesMatch "^privateInfo.ini$|^\.htaccess$|\.log$|^admin.html$">
     Order allow,deny
     Deny from all
 </FilesMatch>

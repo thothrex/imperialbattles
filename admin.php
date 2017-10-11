@@ -2,7 +2,9 @@
 <?php
 require_once('config.php');
 
-if (!isset($_SESSION['username']) || $_SESSION['username'] != "lunashroom") 
+$ini = parse_ini_file('privateInfo.ini');
+$admin_user = $ini['AdminUserName'];
+if (!isset($_SESSION['username']) || $_SESSION['username'] != $admin_user) 
     die ("<h1>Unauthorised access</h1>");
 
 if ($_POST) {
@@ -177,30 +179,7 @@ if ($_POST) {
 
 
 } else {
-    echo <<<FORM
-<!DOCTYPE html>
-<html>
-<head>
-    <title>ADMIN TOOLS</title>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-</head>
-<body>
-
-<h2>Run this script after re-creating the database</h2>
-<form action="" method="post">
-<p><input type='submit' name='terraintype' value='Load Terrain Types' /></p>
-<p><input type='submit' name='unittype' value='Load Unit Types' /></p>
-<p><input type='submit' name='movement' value='Load Movement Table' /></p>
-<p><input type='submit' name='attack' value='Load Attack Table' /></p>
-<p><input type='submit' name='map' value='Load Maps' /></p>
-<br />
-<p><input type='submit' name='game' value='Create GameID 1' /></p>
-<p><input type='submit' name='system' value='Create Player "System"' /></p>
-</form>
-
-</body>
-</html>
-FORM;
+    echo file_get_contents("admin.html");
 }
 ?>
 
