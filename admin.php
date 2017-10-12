@@ -46,31 +46,37 @@ if ($_POST) {
         foreach ($maps as $map) {
             // Add basic map information to Maps table
             $filename = "map/" . $map['name'] . ".json";
-            $query = generate_map_table_entry_insert_query($filename, $map);
+            $statement = generate_map_table_entry_insert_statement($filename, $map, $db_server);
 
             // - Begin transaction -
-            $db_server->begin_transaction();
+            // line below required for workaround for https://bugs.php.net/bug.php?id=66528
+            $db_server->setAttribute(PDO::ATTR_AUTOCOMMIT, 0); 
             try {
-                execute_component_query($query, $db_server);
+                execute_statement($statement);
+                $statement->closeCursor();
 
                 // Get database auto-generated MapID
-                $query = "SELECT MapID FROM Maps WHERE MapName = '" . $map['name'] . "';";
-                execute_component_query($query, $db_server);
-                $row = $db_server->fetch();
+                $statement = generate_mapID_retrieval_statement($map, $db_server);
+                execute_statement($statement);
+                $row = $statement->fetch();
                 $mapid = $row[0];
+                $statement->closeCursor();
 
                 // Add terrain and initial units information to the database
                 // these queries depend on earlier data so must be done within the transaction
-                $terrain_query = generate_map_terrain_insert_query($map, $mapid);
+                $terrain_query = generate_map_terrain_insert_query($filename, $mapid);
                 execute_component_query($terrain_query, $db_server);
 
                 $initial_units_query = generate_initial_units_insert_query($map, $mapid);
                 execute_component_query($initial_units_query, $db_server);
 
-                $db_server->query('COMMIT'); // see https://bugs.php.net/bug.php?id=66528
+                execute_component_query("COMMIT;", $db_server); // see https://bugs.php.net/bug.php?id=66528
+                $db_server->setAttribute(PDO::ATTR_AUTOCOMMIT, 1); // required for the line above
             }
             catch (Exception $e) {
-                $db_server->rollBack();
+                execute_component_query("ROLLBACK;", $db_server); // see https://bugs.php.net/bug.php?id=66528
+                $db_server->setAttribute(PDO::ATTR_AUTOCOMMIT, 1); // required for the line above
+                echo "<p>Transaction rolled back</p>";
                 // continue with other maps as normal
                 if (!($e instanceof PDOException)) {
                     throw $e;
@@ -112,7 +118,7 @@ function generate_terrain_type_table_population_query (string $file_location): s
 // Generates the query needed to populate (i.e. fill in the starting contents) of the unit type table
 // using the data read from the provided json file located at $file_location.
 function generate_unit_type_table_population_query (string $file_location): string {
-    $query = "INSERT INTO UnitType(UnitType,MoveAllowance,PAMinDist,PAMaxDist) VALUES";
+    $query = "INSERT INTO UnitType(UnitType,MoveAllowance,PrimaryAttackMinDist,PrimaryAttackMaxDist) VALUES";
     $json = json_decode(file_get_contents($file_location), true);
     $i = 0;
     foreach ($json as $elem) {
@@ -150,20 +156,63 @@ function generate_attack_table_population_query (string $file_location): string 
     return $query;
 }
 
-function generate_map_table_entry_insert_query (string $file_location, array $map_info): string {
+function generate_map_table_entry_insert_statement
+(string $file_location, array $map_info, PDO &$db_server): PDOStatement {
+    $statement_string
+        = "INSERT INTO Maps(MapName,MaxPlayers,Width,Height) VALUES"
+        . "(:mapname,:maxplayers,:width,:height);";
     $json = json_decode(file_get_contents($file_location), true);
 
-    $query = "INSERT INTO Maps(MapName,MaxPlayers,Width,Height) VALUES";
-    $query .= "('"
-           . $map_info['name'] . "','"
-           . $map_info['maxplayers']  . "','"
-           . $json['width'] . "','" 
-           . $json['height']
-           . "');";
+    $stmt = $db_server->prepare($statement_string);
+    $stmt->bindValue(':mapname', $map_info['name']);
+    $stmt->bindValue(':maxplayers', $map_info['maxplayers']);
+    $stmt->bindValue(':width', $json['width']);
+    $stmt->bindValue(':height', $json['height']);
     
+    return $stmt;
+}
+
+function generate_mapID_retrieval_statement
+(array $map_info, PDO &$db_server) : PDOStatement {
+    $statement_string = 'SELECT MapID FROM Maps WHERE MapName = :mapname;';
+
+    $stmt = $db_server->prepare($statement_string);
+    $stmt->bindValue(':mapname', $map_info['name'], PDO::PARAM_STR);
+    
+    return $stmt;
+}
+
+function generate_map_terrain_insert_query(string $json_filename, $mapid) : string {
+    $query = "INSERT INTO Terrain(MapID,Xloc,Yloc,TerrainType) VALUES";
+    $map_data = json_decode(file_get_contents($json_filename), true);
+    $data = $map_data['layers'][1]['data'];
+    
+    for ($i = 0; $i < ($map_data['width'] * $map_data['height']); $i++) {
+        $x = $i % $map_data['width'];
+        $y = floor($i / $map_data['width']);
+        $terraintype = $data[$i] - 1;
+        $query .= "('" . $mapid . "','" . $x . "','" . $y . "','" . $terraintype . "'),";
+    }
+
+    $query = rtrim($query, ",");
     return $query;
 }
 
+function generate_initial_units_insert_query(array $map_data, $mapid) : string {
+    $query = "INSERT INTO InitialUnits(MapID,SeqNum,UnitType,Xloc,Yloc,State,Health) VALUES";
+    $file = "units/" . $map_data['name'] . ".json";
+    $json = json_decode(file_get_contents($file), true);
+
+    foreach ($json as $elem) {
+        $query .= "('" . $mapid . "','" . $elem['owner'] . "','" . $elem['unitType'] 
+                        . "','" . $elem['location'][0] . "','" 
+                        . $elem['location'][1] . "','" . $elem['state'] . "','" 
+                        . $elem['health'] . "'),";
+    }
+
+    $query = rtrim($query, ",");
+    return $query;
+}
 
 function execute_query(string $query) {
     $db_server = db_connect();
@@ -181,6 +230,20 @@ function execute_query(string $query) {
     }
 }
 
+// we expect the caller to clean up
+function execute_statement(PDOStatement &$prepared_statement) {
+    echo "<p>EXECUTING: ";
+    $prepared_statement->debugDumpParams();
+    echo "</p>";
+    try {
+        $prepared_statement->execute();
+        echo "<p>SUCCESS</p>";
+    }
+    catch (PDOException $e) {
+        echo "<p>FAILED: " . $e->getMessage() . "</p>";
+    }
+}
+
 // THROWS: all generated exceptions, probably PDOExceptions
 // Executes a query intended to be part of a series of queries
 function execute_component_query(string $query, PDO &$db_server) {
@@ -193,37 +256,6 @@ function execute_component_query(string $query, PDO &$db_server) {
         echo "<p>FAILED: " . $e->getMessage() . "</p>";
         throw $e; // propagate to allow for db rollback
     }
-}
-
-function generate_map_terrain_insert_query(array $map_data, $mapid) : string {
-    $query = "INSERT INTO Terrain(MapID,Xloc,Yloc,TerrainType) VALUES";
-    $data = $map_data['layers'][1]['data'];
-    
-    for ($i = 0; $i < ($map_data['width'] * $map_data['height']); $i++) {
-        $x = $i % $map_data['width'];
-        $y = floor($i / $map_data['width']);
-        $terraintype = $data[$i] - 1;
-        $query .= "('" . $mapid . "','" . $x . "','" . $y . "','" . $terraintype . "'),";
-    }
-
-    $query = rtrim($query, ",");
-    return $query;
-}
-
-function generate_initial_units_insert_query(array $map_data, $mapid) : string {
-    $query = "INSERT INTO InitialUnits(MapID,SeqNo,UnitType,Xloc,Yloc,State,Health) VALUES";
-    $file = "units/" . $map_data['name'] . ".json";
-    $json = json_decode(file_get_contents($file), true);
-
-    foreach ($json as $elem) {
-        $query .= "('" . $mapid . "','" . $elem['owner'] . "','" . $elem['unitType'] 
-                        . "','" . $elem['location'][0] . "','" 
-                        . $elem['location'][1] . "','" . $elem['state'] . "','" 
-                        . $elem['health'] . "'),";
-    }
-
-    $query = rtrim($query, ",");
-    return $query;
 }
 
 ?>

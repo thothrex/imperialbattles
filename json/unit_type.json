@@ -1,17 +1,17 @@
 [
   {
     "moveAllowance": 3,
-    "PAMinDist": 0,
-    "PAMaxDist": 1
+    "PrimaryAttackMinDist": 0,
+    "PrimaryAttackMaxDist": 1
   },
   {
     "moveAllowance": 3,
-    "PAMinDist": 1,
-    "PAMaxDist": 3
+    "PrimaryAttackMinDist": 1,
+    "PrimaryAttackMaxDist": 3
   },
   {
     "moveAllowance": 6,
-    "PAMinDist": 0,
-    "PAMaxDist": 1
+    "PrimaryAttackMinDist": 0,
+    "PrimaryAttackMaxDist": 1
   }
 ]
