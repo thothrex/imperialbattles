@@ -1,17 +1,5 @@
--- phpMyAdmin SQL Dump
--- version 3.3.10.4
--- http://www.phpmyadmin.net
---
--- Host: imperialdata.ameredistraction.com
--- Generation Time: Jul 10, 2014 at 02:28 PM
--- Server version: 5.1.56
--- PHP Version: 5.4.20
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
-
---
--- Database: `imperialbattles`
---
 
 -- --------------------------------------------------------
 
@@ -32,7 +20,15 @@ CREATE TABLE IF NOT EXISTS `Games` (
   `Day` int(11) DEFAULT NULL,
   `Turn` int(11) DEFAULT NULL,
   PRIMARY KEY (`GameID`),
-  UNIQUE KEY `GameName` (`GameName`)
+  UNIQUE KEY `GameName` (`GameName`),
+  FOREIGN KEY (MapID)
+    REFERENCES Maps(MapID)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT,
+  FOREIGN KEY (HostName)
+    REFERENCES Players(UserName)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE,
 ) DEFAULT CHARSET=utf8;
 
 --
