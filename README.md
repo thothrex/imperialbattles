@@ -17,7 +17,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 A webserver setup you are comfortable with. XAMPP is recommended as it was the development testing environment. If you are not using Apache, you will need to convert some files (such as .htaccess) to the format your server supports.
 
-Your webserver will need to support PHP and a relational database which is supported by PDOs (see http://php.net/manual/en/pdo.drivers.php).
+Your webserver will need to support PHP and a relational database which is supported by PDOs (see http://php.net/manual/en/pdo.drivers.php). Currently the codebase targets PHP 7.
 
 ## Deployment
 

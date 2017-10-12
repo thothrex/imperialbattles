@@ -17,7 +17,7 @@ function load_config_ini() {
     return parse_ini_file('ServerConfig.ini'); // holds per-vendor info for database
 }
 
-function db_connect() {
+function db_connect() : PDO {
     $priv_ini    = load_private_ini();
     $domain_name = $priv_ini['dbDomain'];
     $db_name     = $priv_ini['dbName'];
