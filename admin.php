@@ -53,6 +53,8 @@ if ($_POST) {
             = generate_map_table_entry_insert_statement(
                 $db_server, $mapname, $maxplayers, $width, $height
             );
+        $mapID_retrieval_statement
+            = generate_mapID_retrieval_statement($db_server, $mapname);
 
         foreach ($maps as $map) {
             // Add basic map information to Maps table
@@ -69,11 +71,11 @@ if ($_POST) {
                 $map_table_entry_insert_statement->closeCursor();
 
                 // Get database auto-generated MapID
-                $statement = generate_mapID_retrieval_statement($map, $db_server);
-                execute_statement($statement);
-                $row = $statement->fetch();
+                
+                execute_statement($mapID_retrieval_statement);
+                $row = $mapID_retrieval_statement->fetch();
                 $mapid = $row[0];
-                $statement->closeCursor();
+                $mapID_retrieval_statement->closeCursor();
 
                 // Add terrain and initial units information to the database
                 // these queries depend on earlier data so must be done within the transaction
@@ -182,11 +184,11 @@ function generate_map_table_entry_insert_statement
 }
 
 function generate_mapID_retrieval_statement
-(array $map_info, PDO &$db_server) : PDOStatement {
+(PDO &$db_server, string &$mapname) : PDOStatement {
     $statement_string = 'SELECT MapID FROM Maps WHERE MapName = :mapname;';
 
     $stmt = $db_server->prepare($statement_string);
-    $stmt->bindValue(':mapname', $map_info['name'], PDO::PARAM_STR);
+    $stmt->bindParam(':mapname', $mapname, PDO::PARAM_STR);
     
     return $stmt;
 }
