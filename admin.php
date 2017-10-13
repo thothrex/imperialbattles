@@ -49,8 +49,7 @@ if ($_POST) {
             $statement = generate_map_table_entry_insert_statement($filename, $map, $db_server);
 
             // - Begin transaction -
-            // line below required for workaround for https://bugs.php.net/bug.php?id=66528
-            $db_server->setAttribute(PDO::ATTR_AUTOCOMMIT, 0); 
+            $db_server->beginTransaction();
             try {
                 execute_statement($statement);
                 $statement->closeCursor();
@@ -70,12 +69,10 @@ if ($_POST) {
                 $initial_units_query = generate_initial_units_insert_query($map, $mapid);
                 execute_component_query($initial_units_query, $db_server);
 
-                execute_component_query("COMMIT;", $db_server); // see https://bugs.php.net/bug.php?id=66528
-                $db_server->setAttribute(PDO::ATTR_AUTOCOMMIT, 1); // required for the line above
+                $db_server->commit(); // be wary of https://bugs.php.net/bug.php?id=66528
             }
             catch (Exception $e) {
-                execute_component_query("ROLLBACK;", $db_server); // see https://bugs.php.net/bug.php?id=66528
-                $db_server->setAttribute(PDO::ATTR_AUTOCOMMIT, 1); // required for the line above
+                $db_server->rollBack();
                 echo "<p>Transaction rolled back</p>";
                 // continue with other maps as normal
                 if (!($e instanceof PDOException)) {
