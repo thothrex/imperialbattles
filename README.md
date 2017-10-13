@@ -8,10 +8,12 @@ These instructions will get you a copy of the project up and running on your loc
 
 1. Install XAMPP (https://www.apachefriends.org/index.html)
 2. Create a new mysql database
-3. Run the SQL queries in /sql on the new database
 4. Fill out the privateInfo.ini file with the necessary information
 5. Fill out the ServerConfig.ini file
 6. Start the webserver (the easiest way is to go into the XAMPP install folder, then run xampp-control)
+7. Create the admin account (username the same as you specified as AdminUserName in privateInfo.ini, any password and email are fine)
+8. Navigate to websiteaddress/admin.php
+9. Click initialise database
 
 ### Prerequisites
 
@@ -22,8 +24,6 @@ Your webserver will need to support PHP and a relational database which is suppo
 ## Deployment
 
 Your privateInfo.ini file must be updated on the server to represent the new host address and database password. Make sure the db passwword is a good one! The .htaccess file included prevents access to this .ini file, but it is your job to ensure this is reflected in the server's actual access permissions.
-
-The sql/ folder is just for setup purposes. It doesn't matter if this is public or not, but it doesn't need to be uploaded to the server.
 
 All other files should go under your server's public access directory (e.g. htdocs, public_html, www, etcetera). The directory structure needs to be maintained as-is.
 

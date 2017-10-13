@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
 require_once('config.php');
 
@@ -17,7 +16,7 @@ if (isset($_REQUEST['function'])) {
             $sth = $db_server->prepare(
                "SELECT Time     AS time,
                        UserName AS username,
-                       Message  AS message
+                       MessageText  AS message
                 FROM Messages
                 WHERE GameID = ?
                 ORDER BY Time, MessageID ASC
@@ -34,7 +33,7 @@ if (isset($_REQUEST['function'])) {
             $query =
                "SELECT Time AS time,
                        UserName AS username,
-                       Message AS message
+                       MessageText AS message
                 FROM Messages
                 WHERE GameID = ?";
             $result; $sth;
@@ -59,7 +58,7 @@ if (isset($_REQUEST['function'])) {
                                    FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $sth = $db_server->prepare(
-               "INSERT INTO Messages(GameID, UserName, Message)
+               "INSERT INTO Messages(GameID, UserName, MessageText)
                 VALUES(?, ?, ?)"
             );
             $sth->execute([$gameID, $username, $message]);
