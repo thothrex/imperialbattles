@@ -10,84 +10,104 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] != $admin_user) {
 }
 
 if ($_POST) {
-    if (isset($_POST['terraintype'])) { 
-        // Load Terrain Types.
-        $file = "json/terrain_type.json";
-        $query = generate_terrain_type_table_population_query($file);
-        execute_query($query);
-    }
-    else if (isset($_POST['unittype'])) {
-        // Load Unit Types.
-        $file = "json/unit_type.json";
-        $query = generate_unit_type_table_population_query($file);
-        execute_query($query);
-    }
-    else if (isset($_POST['movement'])) {
-        // Load Movement Table.
-        $file = "json/move_table.json";
-        $query = generate_movement_table_population_query($file);
-        execute_query($query);
-    }
-    else if (isset($_POST['attack'])) {
-        // Load Attack Table.
-        $file = "json/attack_table.json";
-        $query = generate_attack_table_population_query($file);
-        execute_query($query);
-    }
-    else if (isset($_POST['map'])) {
-        // Load the maps (Map, Terrain and InitialUnits tables).
+    if (isset($_POST['terraintype']))   { load_terrain_types();  }
+    else if (isset($_POST['unittype'])) { load_unit_types();     }
+    else if (isset($_POST['movement'])) { load_movement_table(); }
+    else if (isset($_POST['attack']))   { load_attack_table();   }
+    else if (isset($_POST['map']))      { load_map_tables();     }
+    else if (isset($_POST['game']))     { load_main_chatroom();  }
+    else if (isset($_POST['initdatabase'])) { initialise_database(); }
+}
+else {
+    echo file_get_contents("admin.html");
+}
 
-        $map1 = array("name" => "King of the Hill", "maxplayers" => 4);
-        $map2 = array("name" => "Close Quarters", "maxplayers" => 4);
-        $map3 = array("name" => "Three Rivers", "maxplayers" => 5);
-        $maps = array($map1,$map2,$map3);
+function load_terrain_types (PDO &$db_server = NULL) {
+    $file = "json/terrain_type.json";
+    $query = generate_terrain_type_table_population_query($file);
+    if (is_null ($db_server)) { execute_query($query); }
+    else                      { execute_component_query($query, $db_server); }
+}
 
-        $db_server = db_connect();
+function load_unit_types (PDO &$db_server = NULL) {
+    $file = "json/unit_type.json";
+    $query = generate_unit_type_table_population_query($file);
+    if (is_null ($db_server)) { execute_query($query); }
+    else                      { execute_component_query($query, $db_server); }
+}
 
-        // prepare re-used statements
-        $mapname = "UNINITIALISED";
-        $maxplayers = -1;
-        $width = -1;
-        $height = -1;
-        $map_table_entry_insert_statement
-            = generate_map_table_entry_insert_statement(
-                $db_server, $mapname, $maxplayers, $width, $height
-            );
-        $mapID_retrieval_statement
-            = generate_mapID_retrieval_statement($db_server, $mapname);
+function load_movement_table (PDO &$db_server = NULL) {
+    $file = "json/move_table.json";
+    $query = generate_movement_table_population_query($file);
+    if (is_null ($db_server)) { execute_query($query); }
+    else                      { execute_component_query($query, $db_server); }
+}
 
-        foreach ($maps as $map) {
-            // Set values of bound variables in prepared statements
-            $filename   = "map/" . $map['name'] . ".json";
-            $json       = json_decode(file_get_contents($filename), true);
-            $mapname    = $map['name'];
-            $maxplayers = $map['maxplayers'];
-            $width      = $json['width'];
-            $height     = $json['height'];
-            // - Begin transaction -
-            $db_server->beginTransaction();
-            try {
-                // Add basic map information to Maps table
-                execute_statement($map_table_entry_insert_statement);
-                $map_table_entry_insert_statement->closeCursor();
+function load_attack_table (PDO &$db_server = NULL) {
+    $file = "json/attack_table.json";
+    $query = generate_attack_table_population_query($file);
+    if (is_null ($db_server)) { execute_query($query); }
+    else                      { execute_component_query($query, $db_server); }
+}
 
-                // Get database auto-generated MapID
-                execute_statement($mapID_retrieval_statement);
-                $row = $mapID_retrieval_statement->fetch();
-                $mapid = $row[0];
-                $mapID_retrieval_statement->closeCursor();
+function load_map_tables (PDO &$db_server = NULL) {
+    // Load the maps (Map, Terrain and InitialUnits tables).
 
-                // Add terrain and initial units information to the database
-                // these queries depend on earlier data so must be done within the transaction
-                $terrain_query = generate_map_terrain_insert_query($filename, $mapid);
-                execute_component_query($terrain_query, $db_server);
+    $map1 = array("name" => "King of the Hill", "maxplayers" => 4);
+    $map2 = array("name" => "Close Quarters", "maxplayers" => 4);
+    $map3 = array("name" => "Three Rivers", "maxplayers" => 5);
+    $maps = array($map1,$map2,$map3);
 
-                $initial_units_query = generate_initial_units_insert_query($map, $mapid);
-                execute_component_query($initial_units_query, $db_server);
+    $db_server_provided = !is_null ($db_server);
+    if (is_null ($db_server)) { $db_server = db_connect(); }
 
+    // prepare re-used statements
+    $mapname = "UNINITIALISED";
+    $maxplayers = -1;
+    $width = -1;
+    $height = -1;
+    $map_table_entry_insert_statement
+        = generate_map_table_entry_insert_statement(
+            $db_server, $mapname, $maxplayers, $width, $height
+        );
+    $mapID_retrieval_statement
+        = generate_mapID_retrieval_statement($db_server, $mapname);
+
+    foreach ($maps as $map) {
+        // Set values of bound variables in prepared statements
+        $filename   = "map/" . $map['name'] . ".json";
+        $json       = json_decode(file_get_contents($filename), true);
+        $mapname    = $map['name'];
+        $maxplayers = $map['maxplayers'];
+        $width      = $json['width'];
+        $height     = $json['height'];
+        // - Begin transaction -
+        if (!$db_server_provided) { $db_server->beginTransaction(); }
+        try {
+            // Add basic map information to Maps table
+            execute_statement($map_table_entry_insert_statement);
+            $map_table_entry_insert_statement->closeCursor();
+
+            // Get database auto-generated MapID
+            execute_statement($mapID_retrieval_statement);
+            $row = $mapID_retrieval_statement->fetch();
+            $mapid = $row[0];
+            $mapID_retrieval_statement->closeCursor();
+
+            // Add terrain and initial units information to the database
+            // these queries depend on earlier data so must be done within the transaction
+            $terrain_query = generate_map_terrain_insert_query($filename, $mapid);
+            execute_component_query($terrain_query, $db_server);
+
+            $initial_units_query = generate_initial_units_insert_query($map, $mapid);
+            execute_component_query($initial_units_query, $db_server);
+
+            if (!$db_server_provided) {
                 $db_server->commit(); // be wary of https://bugs.php.net/bug.php?id=66528
             }
-            catch (Exception $e) {
+        }
+        catch (Exception $e) {
+            if (!$db_server_provided) {
                 $db_server->rollBack();
                 echo "<p>Transaction rolled back</p>";
                 if (!($e instanceof PDOException)) {
@@ -96,22 +116,65 @@ if ($_POST) {
                 // continue with other maps as normal
             }
         }
-
+    }
+    if (!$db_server_provided) {
         $db_server = null; // close connection
-
         echo "<br /><br /><button type='button' onclick=window.location='admin.php'>Back</button>";
-        return;
-    }
-    else if (isset($_POST['game'])) {
-        // Create the initial game needed for the chat module.
-        // Throws an exception if the game already exists (caught by the try/catch block in execute_query())
-        $query = "INSERT INTO Games(GameName,MapID,InProgress) VALUES('idle',1,false)";
-        execute_query($query);
     }
 }
-else {
-    echo file_get_contents("admin.html");
+
+function load_main_chatroom (PDO &$db_server = NULL) {
+    // Create the initial game needed for the chat module.
+    // Throws an exception if the game already exists (caught by the try/catch block in execute_query())
+    $query = "INSERT INTO Games(GameName,MapID,InProgress) VALUES('idle',NULL,false)";
+    if (is_null ($db_server)) { execute_query($query); }
+    else                      { execute_component_query($query, $db_server); }
 }
+
+// 'Players' table has to be loaded already
+// for this page to be accessible
+// (one cannot log on without it)
+function initialise_database () {
+    // the order of SQL loading matters
+    // due to foreign-key constraint dependencies
+    $table_list_load_ordered
+        = array("TerrainType", "UnitType", "Maps", // 0 dependencies
+                "Terrain", "InitialUnits", "Games", "Messages", "PlayersGames" // 2 dependencies
+        );
+    $table_data_import_functions_ordered
+        = array("load_terrain_types", "load_unit_types",
+                "load_map_tables", "load_main_chatroom");
+    $db_server = db_connect();
+    // Create table can't be rolled back on MySQL
+    // (It can for other vendors)
+    // but this doesn't hurt to have
+    $db_server->beginTransaction();
+    try {
+        for ($i = 0; $i < count($table_list_load_ordered); $i++) {
+            $filename = "sql/" . $table_list_load_ordered[$i] . ".sql";
+            $query = file_get_contents($filename);
+            execute_component_query($query, $db_server);
+        }
+        for ($i = 0; $i < count($table_data_import_functions_ordered); $i++) {
+            // call the function listed in the array,
+            // passing the db_server as a parameter
+            ($table_data_import_functions_ordered[$i])($db_server);
+        }
+        $db_server->commit(); // be wary of https://bugs.php.net/bug.php?id=66528
+    }
+    catch (Throwable $e) { // error or exception
+        $db_server->rollBack();
+        echo "<p>Transaction rolled back</p>";
+        if (!($e instanceof PDOException)) {
+            throw $e;
+        }
+    }
+    finally {
+        echo "<br /><br /><button type='button' onclick=window.location='admin.php'>Back</button>";
+    }
+}
+
+
 
 // The name isn't great, sorry.
 // Generates the query needed to populate (i.e. fill in the starting contents) of the terrain type table

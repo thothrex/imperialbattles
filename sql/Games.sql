@@ -8,7 +8,7 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 --
 
 CREATE TABLE IF NOT EXISTS `Games` (
-  `GameID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `GameID` bigint unsigned NOT NULL AUTO_INCREMENT,
   `GameName` varchar(255) NOT NULL,
   `MapID` integer unsigned DEFAULT NULL,
   `PlayersLimit` int(11) DEFAULT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS `Games` (
   FOREIGN KEY (HostName)
     REFERENCES Players(UserName)
     ON UPDATE CASCADE
-    ON DELETE CASCADE,
+    ON DELETE CASCADE
 ) DEFAULT CHARSET=utf8;
 
 --
