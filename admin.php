@@ -57,7 +57,7 @@ if ($_POST) {
             = generate_mapID_retrieval_statement($db_server, $mapname);
 
         foreach ($maps as $map) {
-            // Add basic map information to Maps table
+            // Set values of bound variables in prepared statements
             $filename   = "map/" . $map['name'] . ".json";
             $json       = json_decode(file_get_contents($filename), true);
             $mapname    = $map['name'];
@@ -67,11 +67,11 @@ if ($_POST) {
             // - Begin transaction -
             $db_server->beginTransaction();
             try {
+                // Add basic map information to Maps table
                 execute_statement($map_table_entry_insert_statement);
                 $map_table_entry_insert_statement->closeCursor();
 
                 // Get database auto-generated MapID
-                
                 execute_statement($mapID_retrieval_statement);
                 $row = $mapID_retrieval_statement->fetch();
                 $mapid = $row[0];
@@ -90,10 +90,10 @@ if ($_POST) {
             catch (Exception $e) {
                 $db_server->rollBack();
                 echo "<p>Transaction rolled back</p>";
-                // continue with other maps as normal
                 if (!($e instanceof PDOException)) {
                     throw $e;
                 }
+                // continue with other maps as normal
             }
         }
 
@@ -193,6 +193,14 @@ function generate_mapID_retrieval_statement
     return $stmt;
 }
 
+//   This is constructed as a string, rather than as a prepared statement because
+// we can't know the number of rows to insert at once beforehand,
+// (different maps have different sizes, i.e. width*height values)
+// and executing a single statement which inserts multiple rows
+// is more efficient than multiple executions of a single row insertion
+// example explanation: https://www.red-gate.com/simple-talk/sql/performance/comparing-multiple-rows-insert-vs-single-row-insert-with-three-data-load-methods/
+//   Preparing a statement is also less efficient than a text query
+// if you're only using it once.
 function generate_map_terrain_insert_query(string $json_filename, $mapid) : string {
     $query = "INSERT INTO Terrain(MapID,Xloc,Yloc,TerrainType) VALUES";
     $map_data = json_decode(file_get_contents($json_filename), true);
@@ -209,6 +217,14 @@ function generate_map_terrain_insert_query(string $json_filename, $mapid) : stri
     return $query;
 }
 
+//   This is constructed as a string, rather than as a prepared statement because
+// we can't know the number of units to insert at once beforehand,
+// (different maps have different numbers of initial units)
+// and executing a single statement which inserts multiple rows
+// is more efficient than multiple executions of a single row insertion
+// example explanation: https://www.red-gate.com/simple-talk/sql/performance/comparing-multiple-rows-insert-vs-single-row-insert-with-three-data-load-methods/
+//   Preparing a statement is also less efficient than a text query
+// if you're only using it once.
 function generate_initial_units_insert_query(array $map_data, $mapid) : string {
     $query = "INSERT INTO InitialUnits(MapID,SeqNum,UnitType,Xloc,Yloc,State,Health) VALUES";
     $file = "units/" . $map_data['name'] . ".json";
