@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS `InitialUnits` (
   `MapID` integer unsigned NOT NULL,
-  `SeqNum` smallint,
+  `SeqNum` smallint unsigned,
   `UnitType` integer unsigned NOT NULL,
   `Xloc` integer NOT NULL,
   `Yloc` integer NOT NULL,
