@@ -35,5 +35,5 @@ CREATE TABLE IF NOT EXISTS `Games` (
 -- Dumping data for table `Games`
 --
 
-INSERT INTO `Games` (`GameID`, `GameName`, `MapID`, `PlayersLimit`, `NoPlayers`, `InProgress`, `TurnTimeout`, `LastUpdated`, `HostName`, `Day`, `Turn`) VALUES
-(1, 'idle', 1, NULL, 1, 0, 0, '1337-02-02T13:37:02', NULL, NULL, NULL);
+INSERT INTO `Games` (`GameID`, `GameName`, `MapID`, `PlayersLimit`, `NumPlayers`, `InProgress`, `TurnTimeout`, `LastUpdated`, `HostName`, `Day`, `Turn`) VALUES
+(1, 'idle', NULL, NULL, 1, 0, 0, '1337-02-02T13:37:02', NULL, NULL, NULL);
