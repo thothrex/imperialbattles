@@ -43,16 +43,30 @@ if ($_POST) {
         $maps = array($map1,$map2,$map3);
 
         $db_server = db_connect();
+
+        // prepare re-used statements
+        $mapname = "UNINITIALISED";
+        $maxplayers = -1;
+        $width = -1;
+        $height = -1;
+        $map_table_entry_insert_statement
+            = generate_map_table_entry_insert_statement(
+                $db_server, $mapname, $maxplayers, $width, $height
+            );
+
         foreach ($maps as $map) {
             // Add basic map information to Maps table
-            $filename = "map/" . $map['name'] . ".json";
-            $statement = generate_map_table_entry_insert_statement($filename, $map, $db_server);
-
+            $filename   = "map/" . $map['name'] . ".json";
+            $json       = json_decode(file_get_contents($filename), true);
+            $mapname    = $map['name'];
+            $maxplayers = $map['maxplayers'];
+            $width      = $json['width'];
+            $height     = $json['height'];
             // - Begin transaction -
             $db_server->beginTransaction();
             try {
-                execute_statement($statement);
-                $statement->closeCursor();
+                execute_statement($map_table_entry_insert_statement);
+                $map_table_entry_insert_statement->closeCursor();
 
                 // Get database auto-generated MapID
                 $statement = generate_mapID_retrieval_statement($map, $db_server);
@@ -154,18 +168,16 @@ function generate_attack_table_population_query (string $file_location): string 
 }
 
 function generate_map_table_entry_insert_statement
-(string $file_location, array $map_info, PDO &$db_server): PDOStatement {
+(PDO &$db_server, string &$mapname, int &$maxplayers, int &$width, int&$height)
+: PDOStatement {
     $statement_string
         = "INSERT INTO Maps(MapName,MaxPlayers,Width,Height) VALUES"
         . "(:mapname,:maxplayers,:width,:height);";
-    $json = json_decode(file_get_contents($file_location), true);
-
     $stmt = $db_server->prepare($statement_string);
-    $stmt->bindValue(':mapname', $map_info['name']);
-    $stmt->bindValue(':maxplayers', $map_info['maxplayers']);
-    $stmt->bindValue(':width', $json['width']);
-    $stmt->bindValue(':height', $json['height']);
-    
+    $stmt->bindParam(':mapname', $mapname);
+    $stmt->bindParam(':maxplayers', $maxplayers);
+    $stmt->bindParam(':width', $width);
+    $stmt->bindParam(':height', $height);
     return $stmt;
 }
 
