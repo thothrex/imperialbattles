@@ -639,8 +639,10 @@ function showSelectedGame() {
 
 function selectGame(gameID,inProgress) {
     $("#joinBtn").removeAttr('disabled');
-    if (document.forms["serverForm"]["server"].value != null || document.forms["serverForm"]["server"].value != "")
+    var previousSelectedGame = document.forms["serverForm"]["server"].value;
+    if (previousSelectedGame != null && previousSelectedGame != ""){
         $("#" + document.forms["serverForm"]["server"].value).css("background","");
+    }
     document.forms["serverForm"]["server"].value = gameID;
     $("#" + gameID).css("background","red");
 	if (inProgress == databaseTrue) {
@@ -902,4 +904,3 @@ function displayPlayers(players){
                 + "</td><td><img src='img/greendot.png' alt'online' /></td></tr>");        
         });
 }
-
