@@ -23,19 +23,32 @@ var kickingOut = false;
 
 var databaseTrue = '1';
 
+window.onload = lobbyInitialise;
+
 function lobbyInitialise() {
     $.ajax({
          type: "GET",
          url: "onlinePlayers.php",
          data: {'function':'add'}
     });
-    playername = $('#usernameLabel').text();
-    enableChatUpdate();
+    playername = Cookies.get('username');
+    initialiseCurrentUserData();
+    $('#rulesHTMLContainer').append();
+    // chat enabled by itself
     enablePlayersUpdate();
     enableGameBrowserUpdate();
     showScreen();
     loadScores();
 
+}
+
+function initialiseCurrentUserData () {
+    $.get("getCurrentUserData.php", function(data) {
+        var winslossarray = $.parseJSON(data);
+        $("#winsLabel").append(winslossarray[0]);
+        $("#lossesLabel").append(winslossarray[1]);
+    });
+    $('#usernameLabel').append(Cookies.get('username'));
 }
 
 function switchToGameSelection() {
