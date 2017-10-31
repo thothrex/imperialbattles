@@ -137,14 +137,16 @@ function updateGameBrowser() {
 function createGame() {
     if (!popup) {
         var gamename = prompt("Enter a name for the new game:");
-        if (gamename){ 
-            $.getJSON("gameSetup.php",
+        if (gamename){
+            $.post(
+                "gameSetup.php",
                 {
                  'function': 'create',
                  'gamename': gamename,
                  'map': '1'
                 },
-                function(result) {
+                function(rawResult) {
+                    var result = $.parseJSON(rawResult);
                     if (result === SERVER_DUPLICATE_RESPONSE){
                         alert("A game with name '" + gamename + "' already exists");
                     }
@@ -156,7 +158,8 @@ function createGame() {
                     else {
                         alert("Game creation error: " + result);
                     }
-                });
+                }
+            );
         } 
     }
 }

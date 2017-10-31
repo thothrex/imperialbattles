@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
 require_once('config.php');
 require_once('time.php');
@@ -35,8 +34,8 @@ if (isset($_REQUEST['function'])) {
         
         case ('create'):
             $username = $_SESSION['username'];
-            $gamename = $_GET['gamename'];
-            $map      = $_GET['map'];
+            $gamename = $_POST['gamename'];
+            $map      = $_POST['map'];
             
             $sth = $dbh->prepare(
                "SELECT MaxPlayers AS maxplayers
@@ -50,54 +49,66 @@ if (isset($_REQUEST['function'])) {
             $curTime      = isoNow();
 
             $dbh->beginTransaction(); // -----------------------------
-            $sth = $dbh->prepare(
-                "INSERT INTO Games(GameName,MapID,       PlayersLimit,
-                                   HostName,LastUpdated, InProgress)
-                 VALUES(?,?,?,?,?,?)"
-            );
-            try { $sth->execute([$gamename, $map,     $playerslimit,
-                                 $username, $curTime, false]);
-            }
-            catch (Exception $e) {
-                if (get_class($e) === 'PDOException'
-                && $e->getCode()  === $SQL_CONSTRAINT_VIOLATION_ERROR
-                && preg_match("/duplicate entry/i", "{$e->getMessage()}") ) {
-                    echo json_encode('duplicate');
-                    break;
+            try {
+                $sth = $dbh->prepare(
+                    "INSERT INTO Games(GameName,MapID,       PlayersLimit,
+                                       HostName,LastUpdated, InProgress)
+                     VALUES(?,?,?,?,?,?)"
+                );
+                try {
+                    $sth->execute([$gamename, $map,     $playerslimit,
+                                   $username, $curTime, false]);
                 }
-                else throw $e;
-            }
-            $sth = $dbh->prepare(
-               "SELECT GameID AS gameid
-                FROM   Games
-                WHERE  GameName = ? AND HostName = ?"
-            );
-            $sth->execute([$gamename, $username]);
+                catch (Exception $e) {
+                    if (get_class($e) === 'PDOException'
+                    && $e->getCode()  === $SQL_CONSTRAINT_VIOLATION_ERROR
+                    && preg_match("/duplicate entry/i", "{$e->getMessage()}") ) {
+                        echo json_encode('duplicate');
+                        break;
+                    }
+                    else throw $e;
+                }
+                $sth = $dbh->prepare(
+                   "SELECT GameID AS gameid
+                    FROM   Games
+                    WHERE  GameName = ? AND HostName = ?"
+                );
+                $sth->execute([$gamename, $username]);
 
-            $row    = $sth->fetch();
-            $gameID = strval($row[0]);
-            $sth = $dbh->prepare(
-               "INSERT INTO PlayersGames(UserName,GameID,Colour,Ready)
-                VALUES(?,?,'red', true)"
-            );
-            $sth->execute([$username, $gameID]);
-            $dbh->commit(); // -----------------------------
+                $row    = $sth->fetch();
+                $gameID = strval($row[0]);
+                $sth = $dbh->prepare(
+                   "INSERT INTO PlayersGames(UserName,GameID,Colour,Ready)
+                    VALUES(?,?,'red', true)"
+                );
+                $sth->execute([$username, $gameID]);
+                $dbh->commit(); // -----------------------------
+            }
+            catch (Throwable $e) {
+                $dbh->rollBack();
+                if (!($e instanceof PDOException)) {
+                    throw $e;
+                }
+            }
 			
             $sth = $dbh->prepare(
               "SELECT GameID AS gameid,           MapID AS mapid,
                       MapName AS mapname,         MaxPlayers AS maxplayers,
                       Width AS width,             Height AS height,
                       GameName AS gamename,       PlayersLimit AS playerslimit,
-		                  TurnTimeout AS turntimeout, HostName AS hostname,
+		              TurnTimeout AS turntimeout, HostName AS hostname,
                       LastUpdated AS lastupdated, UserName AS username,
                       Colour AS colour,           Team AS team,
                       Ready AS ready
               FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
               WHERE GameID = ?
-              ORDER BY SeqNo ASC"
+              ORDER BY SeqNum ASC"
             );
-            $result = $sth->execute([$gameID]);
-            echo sqlresult_to_json($sth, PDO::FETCH_ASSOC);
+            $sth->execute([$gameID]);
+            $result = sqlresult_to_json($sth, PDO::FETCH_ASSOC);
+            echo $result;
+            // DEBUG
+            error_log("Created game, returned JSON $result");
             break;
 
         case ('join'):
@@ -123,7 +134,7 @@ if (isset($_REQUEST['function'])) {
             $dbh->beginTransaction(); //---------------------
 
             $sth = $dbh->prepare(
-               "INSERT INTO PlayersGames(UserName,GameID,SeqNo,Colour)
+               "INSERT INTO PlayersGames(UserName,GameID,SeqNum,Colour)
                 VALUES(?,?,?,?)"
             );
             $sth->execute([$username, $gameid, $seqno, $colour]);
@@ -154,7 +165,7 @@ if (isset($_REQUEST['function'])) {
                     Ready AS ready,             InProgress AS inprogress
                 FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
 			    WHERE GameID = ?
-                ORDER BY SeqNo ASC"
+                ORDER BY SeqNum ASC"
             );
             $sth->execute([$gameID]);
             echo sqlresult_to_json($sth);
@@ -187,7 +198,7 @@ if (isset($_REQUEST['function'])) {
                     Ready AS ready,             InProgress AS inprogress
                 FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
                 WHERE GameID = ? AND LastUpdated > ?
-                ORDER BY SeqNo ASC"
+                ORDER BY SeqNum ASC"
 			);
             $result = $sth->execute([$gameID, $lastUpdated]);
             $rows   = $sth->fetchAll(PDO::FETCH_ASSOC);
@@ -201,7 +212,7 @@ if (isset($_REQUEST['function'])) {
             $username = $_SESSION['username'];
 
             $sth = $dbh->prepare(
-               "SELECT SeqNo FROM PlayersGames
+               "SELECT SeqNum FROM PlayersGames
                 WHERE Username = ? AND GameID = ?"
             );
             $sth->execute([$username, $gameID]);
@@ -216,9 +227,9 @@ if (isset($_REQUEST['function'])) {
 
             $sth = $dbh->prepare(
                "UPDATE PlayersGames
-                SET    SeqNo = SeqNo -1
+                SET    SeqNum = SeqNum -1
                 WHERE  GameID = ?
-                  AND  SeqNo > ?"
+                  AND  SeqNum > ?"
             );
             $sth->execute([$gameID, $seqNo]);
 
@@ -268,7 +279,7 @@ if (isset($_REQUEST['function'])) {
             }
             
             $sth = $dbh->prepare(
-               "SELECT SeqNo
+               "SELECT SeqNum
                 FROM PlayersGames
                 WHERE UserName = ? AND GameID = ?"
             );
@@ -298,8 +309,8 @@ if (isset($_REQUEST['function'])) {
 
 	       $sth = $dbh->prepare(
                "UPDATE PlayersGames
-                SET    SeqNo  = SeqNo -1
-	            WHERE  GameID = ? AND SeqNo > ?"
+                SET    SeqNum  = SeqNum -1
+	            WHERE  GameID = ? AND SeqNum > ?"
             );
             $sth->execute([$gameID, $seqno]);
             $result = $dbh->commit(); // --------------
@@ -348,7 +359,7 @@ if (isset($_REQUEST['function'])) {
 
 	        $sth = $dbh->prepare(
                "SELECT UserName AS username, GameID AS gameid,
-                       Colour AS colour,     SeqNo AS seqno,
+                       Colour AS colour,     SeqNum AS seqno,
                        Team AS team,         Ready AS ready,
                        Alive AS alive
                 FROM  PlayersGames
