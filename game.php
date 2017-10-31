@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
 require_once('config.php');
 
@@ -33,7 +32,7 @@ $gamename = filter_var($row[0], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     
     <script src="js/jquery-1.10.1.min.js"></script>
     <script src="js/jquery.gamequery-0.7.1-patch1.js"></script>
-    <script src="js/jquery.cookie.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
     <script src="js/json2.js"></script>
     <script src="js/login.js"></script>
   	<script src="js/game.js"></script>
