@@ -31,7 +31,7 @@ All other files should go under your server's public access directory (e.g. htdo
 
 * [jQuery](https://jquery.com/) - JavaScript web-dev standard library
 * [gameQuery](http://gamequeryjs.com/) - JavaScript graphics engine
-* [jQuery Cookie Plugin v1.3.1](https://github.com/carhartl/jquery-cookie) - jQuery plugin for reading, writing and deleting cookies
+* [JavaScript Cookie](https://github.com/js-cookie/js-cookie) - JavaScript cookie manipulation library
 
 ## Authors
 
