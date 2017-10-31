@@ -14,7 +14,7 @@ if (isset($_SESSION['username'])) {
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <?php include_once "common.html"; ?>
     <link rel="stylesheet" type="text/css" href="css/login.css" />
-    <script src="js/jquery.cookie.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
     <script src="js/login.js"></script>
     <noscript>
         This page requires JavaScript. You can either switch to a browser that supports

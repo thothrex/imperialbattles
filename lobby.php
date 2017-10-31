@@ -15,7 +15,7 @@ if (!isset($_SESSION['username'])) {
     <?php include_once "common.html"; ?>
     <link rel="stylesheet" type="text/css" href="css/lobby.css" />
     <link rel="stylesheet" type="text/css" href="css/chat.css" />
-    <script src="js/jquery.cookie.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
     <script src="js/login.js"></script>
 	<script src="js/lobby.js"></script>
     <noscript>
