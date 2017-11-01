@@ -376,7 +376,7 @@ if (isset($_REQUEST['function'])) {
             //if the unit attacks
             if ($target != null) {
                 $sth = $dbh->prepare(
-                   "SELECT PAMinDist, PAMaxDist, Health, Defence
+                   "SELECT PrimaryAttackMinDist, PrimaryAttackMaxDist, Health, Defence
                     FROM Units
                         NATURAL JOIN UnitType
                         NATURAL JOIN Terrain
@@ -412,7 +412,7 @@ if (isset($_REQUEST['function'])) {
                 
                 $sth = $dbh->prepare(
                    "SELECT UnitID, UnitType, Defence,
-                           Health, PAMinDist, PAMaxDist
+                           Health, PrimaryAttackMinDist, PrimaryAttackMaxDist
                     FROM Units NATURAL JOIN UnitType NATURAL JOIN Games
                                NATURAL JOIN Terrain  NATURAL JOIN TerrainType
                     WHERE GameID = ? AND SeqNum <> Turn
