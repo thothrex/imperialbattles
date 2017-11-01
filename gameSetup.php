@@ -78,8 +78,8 @@ if (isset($_REQUEST['function'])) {
                 $row    = $sth->fetch();
                 $gameID = strval($row[0]);
                 $sth = $dbh->prepare(
-                   "INSERT INTO PlayersGames(UserName,GameID,Colour,Ready)
-                    VALUES(?,?,'red', true)"
+                   "INSERT INTO PlayersGames(UserName,GameID,SeqNum,Team,Colour,Ready)
+                    VALUES(?,?,'1','1','red', true)"
                 );
                 $sth->execute([$username, $gameID]);
                 $dbh->commit(); // -----------------------------
