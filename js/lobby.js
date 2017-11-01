@@ -23,19 +23,32 @@ var kickingOut = false;
 
 var databaseTrue = '1';
 
+window.onload = lobbyInitialise;
+
 function lobbyInitialise() {
     $.ajax({
          type: "GET",
          url: "onlinePlayers.php",
          data: {'function':'add'}
     });
-    playername = $('#usernameLabel').text();
-    enableChatUpdate();
+    playername = Cookies.get('username');
+    initialiseCurrentUserData();
+    $('#rulesHTMLContainer').append();
+    // chat enabled by itself
     enablePlayersUpdate();
     enableGameBrowserUpdate();
     showScreen();
     loadScores();
 
+}
+
+function initialiseCurrentUserData () {
+    $.get("getCurrentUserData.php", function(data) {
+        var winslossarray = $.parseJSON(data);
+        $("#winsLabel").append(winslossarray[0]);
+        $("#lossesLabel").append(winslossarray[1]);
+    });
+    $('#usernameLabel').append(Cookies.get('username'));
 }
 
 function switchToGameSelection() {
@@ -124,14 +137,16 @@ function updateGameBrowser() {
 function createGame() {
     if (!popup) {
         var gamename = prompt("Enter a name for the new game:");
-        if (gamename){ 
-            $.getJSON("gameSetup.php",
+        if (gamename){
+            $.post(
+                "gameSetup.php",
                 {
                  'function': 'create',
                  'gamename': gamename,
                  'map': '1'
                 },
-                function(result) {
+                function(rawResult) {
+                    var result = $.parseJSON(rawResult);
                     if (result === SERVER_DUPLICATE_RESPONSE){
                         alert("A game with name '" + gamename + "' already exists");
                     }
@@ -143,7 +158,8 @@ function createGame() {
                     else {
                         alert("Game creation error: " + result);
                     }
-                });
+                }
+            );
         } 
     }
 }
@@ -623,8 +639,10 @@ function showSelectedGame() {
 
 function selectGame(gameID,inProgress) {
     $("#joinBtn").removeAttr('disabled');
-    if (document.forms["serverForm"]["server"].value != null || document.forms["serverForm"]["server"].value != "")
+    var previousSelectedGame = document.forms["serverForm"]["server"].value;
+    if (previousSelectedGame != null && previousSelectedGame != ""){
         $("#" + document.forms["serverForm"]["server"].value).css("background","");
+    }
     document.forms["serverForm"]["server"].value = gameID;
     $("#" + gameID).css("background","red");
 	if (inProgress == databaseTrue) {
@@ -886,4 +904,3 @@ function displayPlayers(players){
                 + "</td><td><img src='img/greendot.png' alt'online' /></td></tr>");        
         });
 }
-

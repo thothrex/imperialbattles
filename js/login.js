@@ -1,16 +1,17 @@
 var popup = false;
 
 function initialise() {
-    if ($.cookie("user") && $.cookie("pass")) {
-        document.forms["loginForm"]["username"].value = $.cookie("user");
-        document.forms["loginForm"]["password"].value = $.cookie("pass");
-        login();
+    if (Cookies.get("username")/* && $.cookie("pass")*/) {
+        // TODO: what does this mean?
+        //       The PHP username session variable is not set but the JS one is.
+        //       Why would this happen?
+        document.forms["loginForm"]["username"].value = Cookies.get("username");
+        //document.forms["loginForm"]["password"].value = $.cookie("pass");
+        //login();
     }
-    else {
-        $("#images").fadeIn();
-        $("#loginScreen").fadeIn();
-        $("#screenshots").fadeIn();
-    }
+    $("#images").fadeIn();
+    $("#loginScreen").fadeIn();
+    $("#screenshots").fadeIn();
 }
 
 /* Switches to the Register Form. */
@@ -36,7 +37,7 @@ function showForgotPassForm() {
     $("#loginStatusLabel").html("&nbsp;");
 }
 
-/* Attempts to login to the system. */
+// Attempts to login to the system.
 function login() {
     var user = document.forms["loginForm"]["username"].value.toLowerCase();
     var pass = document.forms["loginForm"]["password"].value;
@@ -55,6 +56,11 @@ function login() {
         function(data) {
             if (data.match("true")) {
 				location.reload();
+                // TODO:   Need to verify if this is safe.
+                //         I don't care right now because
+                //       this is just a demo system.
+                //         The data used here ought to be super fake.
+                Cookies.set('username', user);
             } else {
                 $("#loginStatusLabel").text(data);
             }
@@ -62,15 +68,10 @@ function login() {
     }
 }
 
-function setCookie(username,password) {
-    $.cookie("user", username, { expires : 7 });
-    $.cookie("pass", password, { expires : 7 });
-}
-
-/* Logs the user out of the system. */
+// Logs the user out of the system.
 function logout() {
-    $.removeCookie("user");
-    $.removeCookie("pass");
+    Cookies.remove('username');
+    //Cookies.remove('password'); this should never be set
 
     if (loc == "host") {
         $.ajax({

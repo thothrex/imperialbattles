@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
 require_once('config.php');
 require_once('time.php');
@@ -12,7 +11,7 @@ function areAdjacent($x1,$y1,$x2,$y2){
 
 function checkPlayerDefeated($dbh, $gameID, $unitID){
     $sth = $dbh->prepare(
-       "SELECT SeqNo
+       "SELECT SeqNum
         FROM   Units
         WHERE  UnitID = ?"
     );
@@ -27,7 +26,7 @@ function checkPlayerDefeated($dbh, $gameID, $unitID){
     $sth = $dbh->prepare(
        "SELECT COUNT(UnitID)
         FROM   Units
-        WHERE  SeqNo = ? AND GameID = ?"
+        WHERE  SeqNum = ? AND GameID = ?"
     );
     $sth->execute([$seqNo,$gameID]);
 
@@ -36,7 +35,7 @@ function checkPlayerDefeated($dbh, $gameID, $unitID){
         $sth = $dbh->prepare(
            "UPDATE PlayersGames
             SET    Alive = false
-            WHERE  SeqNo = ? AND GameID = ?"
+            WHERE  SeqNum = ? AND GameID = ?"
         );
         $sth->execute([$seqNo,$gameID]);
     }
@@ -89,10 +88,10 @@ if (isset($_REQUEST['function'])) {
             $sth->execute([$curTime, $gameid]);
             $sth = $dbh->prepare(
                "INSERT INTO Units
-                       (GameID,SeqNo,UnitType,Xloc,Yloc,State,Health)
-                SELECT       ?,SeqNo,UnitType,Xloc,Yloc,State,Health
+                       (GameID,SeqNum,UnitType,Xloc,Yloc,State,Health)
+                SELECT       ?,SeqNum,UnitType,Xloc,Yloc,State,Health
                 FROM  InitialUnits
-                WHERE MapID = ? and SeqNo <= ?"
+                WHERE MapID = ? and SeqNum <= ?"
             );
             $sth->execute([$gameid, $mapid, $noplayers]);
             $dbh->commit(); // -----------------------------
@@ -106,7 +105,7 @@ if (isset($_REQUEST['function'])) {
 
             $sth = $dbh->prepare(
                "SELECT MapName,     Width, Height, GameID, GameName,
-                       TurnTimeout, SeqNo, Turn,   LastUpdated, Day
+                       TurnTimeout, SeqNum, Turn,   LastUpdated, Day
                 FROM Maps NATURAL JOIN Games NATURAL JOIN PlayersGames
                 WHERE GameID = ? and UserName = ?"
             );
@@ -140,10 +139,10 @@ if (isset($_REQUEST['function'])) {
             );
 
             $sth = $dbh->prepare(
-               "SELECT   UserName,Colour,Team,SeqNo,Alive
+               "SELECT   UserName,Colour,Team,SeqNum,Alive
                 FROM     PlayersGames
                 WHERE    GameID = ?
-                ORDER BY SeqNo ASC"
+                ORDER BY SeqNum ASC"
             );
             $sth->execute([$gameid]);
 
@@ -165,7 +164,7 @@ if (isset($_REQUEST['function'])) {
             }
 
             $sth = $dbh->prepare(
-               "SELECT SeqNo, UnitType, Xloc, Yloc, State, Health
+               "SELECT SeqNum, UnitType, Xloc, Yloc, State, Health
                 FROM   Units
                 WHERE  GameID = ?"
             );
@@ -251,7 +250,7 @@ if (isset($_REQUEST['function'])) {
                     NATURAL JOIN PlayersGames
                     NATURAL JOIN Maps
                     NATURAL JOIN Units
-                WHERE GameID   = ? AND SeqNo = Turn
+                WHERE GameID   = ? AND SeqNum = Turn
                   AND Xloc     = ? AND Yloc  = ?
                   AND UserName = ? AND State <> 'tired'"
             );
@@ -416,7 +415,7 @@ if (isset($_REQUEST['function'])) {
                            Health, PAMinDist, PAMaxDist
                     FROM Units NATURAL JOIN UnitType NATURAL JOIN Games
                                NATURAL JOIN Terrain  NATURAL JOIN TerrainType
-                    WHERE GameID = ? AND SeqNo <> Turn
+                    WHERE GameID = ? AND SeqNum <> Turn
                       AND Xloc   = ? AND Yloc = ?"
                 );
                 $sth->execute([$gameID, $target[0], $target[1]]);
@@ -542,9 +541,9 @@ if (isset($_REQUEST['function'])) {
             $gameid   = $_POST['gameid'];
             $username = $_SESSION['username'];
             $sth = $dbh->prepare(
-               "SELECT SeqNo
+               "SELECT SeqNum
                 FROM   PlayersGames NATURAL JOIN Games
-                WHERE  GameID = ? AND UserName = ? AND SeqNo = Turn"
+                WHERE  GameID = ? AND UserName = ? AND SeqNum = Turn"
             );
             $sth->execute([$gameid,$username]);
 
@@ -565,7 +564,7 @@ if (isset($_REQUEST['function'])) {
             $username = $_SESSION['username'];
 
             $sth = $dbh->prepare(
-               "SELECT SeqNo, Turn
+               "SELECT SeqNum, Turn
                 FROM   PlayersGames NATURAL JOIN Games
                 WHERE  GameID = ? AND UserName = ?"
             );
@@ -592,7 +591,7 @@ if (isset($_REQUEST['function'])) {
             $sth->execute([$gameid,$username]);
             $sth = $dbh->prepare(
                "DELETE FROM Units
-                WHERE GameID = ? AND SeqNo = ?"
+                WHERE GameID = ? AND SeqNum = ?"
             );
             $sth->execute([$gameid, $seqNo]);
             $sth = $dbh->prepare(
@@ -668,7 +667,7 @@ if (isset($_REQUEST['function'])) {
                 break;
             }
             $sth = $dbh->prepare(
-               "SELECT SeqNo
+               "SELECT SeqNum
                 FROM   PlayersGames
                 WHERE  GameID = ? and Team = ?"
             );
@@ -728,10 +727,10 @@ function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
     $seqno  = intVal(filter_var(trim($seqno),  FILTER_SANITIZE_NUMBER_INT));
     $gameid = intVal(filter_var(trim($gameid), FILTER_SANITIZE_NUMBER_INT));
     $sth = $dbh->prepare(
-       "SELECT SeqNo
+       "SELECT SeqNum
         FROM   PlayersGames
         WHERE  GameID = ? AND Alive = true
-        ORDER BY SeqNo ASC"
+        ORDER BY SeqNum ASC"
     );
     $sth->execute([$gameid]);
     $rows = $sth->fetchAll(PDO::FETCH_ASSOC);
@@ -743,11 +742,11 @@ function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
     $noplayers = count($rows);
     $i = 0; // deliberate - propagating
     for (; $i < $noplayers; $i++) {
-        if ($rows[$i]['SeqNo'] > $seqno) break;
+        if ($rows[$i]['SeqNum'] > $seqno) break;
     }
     if ($i === $noplayers) $i = 0; //cycle
     $curTime = isoNow();
-    $turn    = intVal($rows[$i]['SeqNo']);
+    $turn    = intVal($rows[$i]['SeqNum']);
     if (!$turn){
         throw new Exception("Invalid sequence numbers");
         return json_encode("failure");
@@ -767,7 +766,7 @@ function endTurnOfPlayer($dbh, $seqno, $gameid, $username) {
     $sth = $dbh->prepare(
        "UPDATE Units
         SET    State = 'normal'
-        WHERE  GameID = ? AND SeqNo = ?"
+        WHERE  GameID = ? AND SeqNum = ?"
     );
     $sth->execute([$gameid, $turn]);
     $sth = $dbh->prepare(
