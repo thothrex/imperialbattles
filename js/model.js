@@ -105,7 +105,7 @@ Model.UNIT_TYPE_NAMES = ['spearman', 'archer', 'lancer'];
 Model.SERVER_UPDATE_MS = 1000;
 Model.TERRAIN_LAYER_NAME = "logic";
 Model.DATABASE_TRUE = '1';
-
+Model.MAX_SEARCH_RECURSION_ERROR_LIMIT = 100; // in cells outward i.e max move or attack range
 
 /*******************************************************************************
  * model.startGame() - commences the game. Should only be called after the model
@@ -420,7 +420,11 @@ function loadUnitTypeData(unitTypeList){
 
     $.each(unitTypeList, function(index, value){
         unitTypes[index] 
-            = new UnitType(value.moveAllowance, value.PAMaxDist, value.PAMinDist);
+            = new UnitType(
+                value.moveAllowance,
+                value.PrimaryAttackMaxDist,
+                value.PrimaryAttackMinDist
+            );
     });
 }
 
@@ -860,9 +864,9 @@ function UnitType(moveAllowance, maxAttack, minAttack){
     this.moveAllowance = moveAllowance;
 
     // up to and including
-    this.primAttackMax = maxAttack; 
+    this.PrimaryAttackMaxDist = maxAttack;
     // attacks have to be strictly greater than this distance
-    this.primAttackMin = minAttack; 
+    this.PrimaryAttackMinDist = minAttack;
 }
 
 
@@ -925,6 +929,7 @@ Cell.prototype.reachableLocations = function() {
     var unitType = this.unit.unitType
     var cell = this;
     var maxDepth = unitTypes[unitType].moveAllowance;
+    validateMaxDLSDepth(maxDepth, unitTypes, unitType, "moveAllowance");
     //$("#results").append("<p>maxDepth: " + maxDepth + "</p>");
 
     $.each(this.neighbours(), function(index, value){
@@ -947,7 +952,8 @@ Cell.prototype.attackableLocations = function(attackType, speculativeUnit) {
 
     var maxDepth;
     if(attackType === "primary"){
-        maxDepth = unitTypes[unitType].primAttackMax;
+        maxDepth = unitTypes[unitType].PrimaryAttackMaxDist;
+        validateMaxDLSDepth(maxDepth, unitTypes, unitType, "PrimaryAttackMaxDist");
     }
     $.each(this.neighbours(), function(index, value){
         DLS(value, unitType, 0, maxDepth, maxLocs, "attack", cell);
@@ -955,7 +961,7 @@ Cell.prototype.attackableLocations = function(attackType, speculativeUnit) {
 
     var minLocs = new Array();
     if(attackType === "primary"){
-        maxDepth = unitTypes[unitType].primAttackMin;
+        maxDepth = unitTypes[unitType].PrimaryAttackMinDist;
     }
     $.each(this.neighbours(), function(index, value){
         DLS(value, unitType, 0, maxDepth, minLocs, "attack", cell);
@@ -1290,4 +1296,16 @@ function setNotEmpty(object){
         returnval = true;
     });
     return returnval;
+}
+
+function validateMaxDLSDepth (maxDepth, unitTypesArray, unitType, fieldName) {
+    if (maxDepth === undefined
+    || maxDepth === null
+    || maxDepth < 0
+    || maxDepth > Model.MAX_SEARCH_RECURSION_ERROR_LIMIT)
+    {
+        throw "Unit Type " + unitType
+            + " has invalid value: '" + unitTypesArray[unitType][fieldName] + "'"
+            + " for field " + fieldName;
+    }
 }

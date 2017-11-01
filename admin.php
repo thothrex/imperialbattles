@@ -199,8 +199,8 @@ function generate_unit_type_table_population_query (string $file_location): stri
     $json = json_decode(file_get_contents($file_location), true);
     $i = 0;
     foreach ($json as $elem) {
-        $query .= "('" . $i . "','" . $elem['moveAllowance'] . "','" . $elem['PAMinDist'] . "','" . 
-                    $elem['PAMaxDist'] . "'),";
+        $query .= "('" . $i . "','" . $elem['moveAllowance'] . "','" . $elem['PrimaryAttackMinDist'] . "','" .
+                    $elem['PrimaryAttackMaxDist'] . "'),";
         $i++;
     }
     $query = rtrim($query, ",");
