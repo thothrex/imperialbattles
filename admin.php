@@ -146,7 +146,8 @@ function initialise_database () {
         );
     $table_data_import_functions_ordered
         = array("load_terrain_types", "load_unit_types",
-                "load_map_tables", "load_main_chatroom");
+                "load_map_tables", "load_main_chatroom",
+                "load_movement_table", "load_attack_table");
     $db_server = db_connect();
     // Create table can't be rolled back on MySQL
     // (It can for other vendors)
