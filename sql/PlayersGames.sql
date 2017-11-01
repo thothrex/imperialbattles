@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS `PlayersGames` (
   `Team` smallint unsigned,
   `Ready` boolean,
   PRIMARY KEY (`GameID`, `UserName`),
+  UNIQUE INDEX(`GameID`, `SeqNum`),
   FOREIGN KEY (GameID)
     REFERENCES Games(GameID)
     ON UPDATE CASCADE
