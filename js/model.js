@@ -122,10 +122,10 @@ Model.prototype.startGame = function () {
             this.numPlayers = resumeData.players.length;
             this.players = new Array();
             $.each(resumeData.players, $.proxy(function(index, value){
-                this.players[value.seqno] = value;
-                this.players[value.seqno].alive = 
+                this.players[value.seqnum] = value;
+                this.players[value.seqnum].alive = 
                     (value.alive === Model.DATABASE_TRUE);
-                this.players[value.seqno].units = new Array();
+                this.players[value.seqnum].units = new Array();
             }, this) );            
 
             return $.getJSON(resumeData.map.mapname).then(function (mapData_) {
