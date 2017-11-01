@@ -17,7 +17,7 @@ $query = "SELECT UserName AS username,
           LIMIT 20";
 $result = $dbh->query($query);
 
-echo sqlresult_to_json($result, PDO::FETCH_ASSOC);
+echo sql_result_to_json_array($result, PDO::FETCH_ASSOC);
 
 $dbh = null; //close connection
 ?>

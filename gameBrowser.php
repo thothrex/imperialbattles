@@ -23,7 +23,7 @@ $sth = $db_server->prepare(
     ORDER BY InProgress DESC"
 );
 $result = $sth->execute([$username, $username]);
-echo sqlresult_to_json($sth);
+echo sql_result_to_json_array($sth);
 
 $db_server = null; //close connection
 ?>

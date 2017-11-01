@@ -18,7 +18,7 @@ if (isset($_REQUEST['function'])) {
                 WHERE LoggedOn = true"
             );
             $sth->execute();
-            echo sqlresult_to_json($sth);
+            echo sql_result_to_json_array($sth);
             break;
 
         case('remove'):

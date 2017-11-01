@@ -139,12 +139,15 @@ function initialise_database () {
     // due to foreign-key constraint dependencies
     $table_list_load_ordered
         = array("TerrainType", "UnitType", "Maps", // 0 dependencies
-                "Terrain", "InitialUnits", "Games", "Messages", "PlayersGames", // first-order dependencies
+                "Terrain", "InitialUnits", "Games", // first-order dependencies
+                "Messages", "PlayersGames","Movement", // first-order dependencies cont.
+                "Attack", // first-order dependencies cont.
                 "Units", "Updates" // second-order dependencies
         );
     $table_data_import_functions_ordered
         = array("load_terrain_types", "load_unit_types",
-                "load_map_tables", "load_main_chatroom");
+                "load_map_tables", "load_main_chatroom",
+                "load_movement_table", "load_attack_table");
     $db_server = db_connect();
     // Create table can't be rolled back on MySQL
     // (It can for other vendors)
@@ -199,8 +202,8 @@ function generate_unit_type_table_population_query (string $file_location): stri
     $json = json_decode(file_get_contents($file_location), true);
     $i = 0;
     foreach ($json as $elem) {
-        $query .= "('" . $i . "','" . $elem['moveAllowance'] . "','" . $elem['PAMinDist'] . "','" . 
-                    $elem['PAMaxDist'] . "'),";
+        $query .= "('" . $i . "','" . $elem['moveAllowance'] . "','" . $elem['PrimaryAttackMinDist'] . "','" .
+                    $elem['PrimaryAttackMaxDist'] . "'),";
         $i++;
     }
     $query = rtrim($query, ",");

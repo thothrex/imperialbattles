@@ -229,7 +229,7 @@ if (isset($_REQUEST['function'])) {
             );
             $sth->execute([$gameID,$username]);
 
-            echo sqlresult_to_json($sth, PDO::FETCH_ASSOC);
+            echo sql_result_to_json_array($sth, PDO::FETCH_ASSOC);
             clearUpdates($dbh, $gameID, $username);
             break;
 
@@ -376,7 +376,7 @@ if (isset($_REQUEST['function'])) {
             //if the unit attacks
             if ($target != null) {
                 $sth = $dbh->prepare(
-                   "SELECT PAMinDist, PAMaxDist, Health, Defence
+                   "SELECT PrimaryAttackMinDist, PrimaryAttackMaxDist, Health, Defence
                     FROM Units
                         NATURAL JOIN UnitType
                         NATURAL JOIN Terrain
@@ -412,7 +412,7 @@ if (isset($_REQUEST['function'])) {
                 
                 $sth = $dbh->prepare(
                    "SELECT UnitID, UnitType, Defence,
-                           Health, PAMinDist, PAMaxDist
+                           Health, PrimaryAttackMinDist, PrimaryAttackMaxDist
                     FROM Units NATURAL JOIN UnitType NATURAL JOIN Games
                                NATURAL JOIN Terrain  NATURAL JOIN TerrainType
                     WHERE GameID = ? AND SeqNum <> Turn
@@ -562,58 +562,79 @@ if (isset($_REQUEST['function'])) {
         case('resign'):
             $gameid   = $_POST['gameid'];
             $username = $_SESSION['username'];
+            $resignationMessage = $username . " has resigned";
 
-            $sth = $dbh->prepare(
-               "SELECT SeqNum, Turn
-                FROM   PlayersGames NATURAL JOIN Games
-                WHERE  GameID = ? AND UserName = ?"
-            );
-            $sth->execute([$gameid,$username]);
+            try {
+                $dbh->beginTransaction(); // -----------------------------
+                // Get SeqNum of requesting user for future queries
+                // and check whether or not it is the requesting player's turn
+                // to see if we need to skip them or not
+                $sth = $dbh->prepare(
+                   "SELECT SeqNum, Turn
+                    FROM   PlayersGames NATURAL JOIN Games
+                    WHERE  GameID = ? AND UserName = ?"
+                );
+                $sth->execute([$gameid,$username]);
+                $row = $sth->fetch();
+                if (!$row) {
+                    throw new Exception("$username is not in game #$gameid");
+                    break;
+                }
+                $currentplayer      = intVal($row[1]) === intVal($row[0]);
+                $seqNo              = $row[0];
+                $removePlayerAction = json_encode(array(
+                  'type'   => 'removePlayer',
+                  'player' => intVal($seqNo)
+                ));
 
-            $row = $sth->fetch();
-            if (!$row) {
-                //error
+                // Remove requesting player from this game
+                $sth = $dbh->prepare(
+                   "DELETE FROM PlayersGames
+                    WHERE GameID = ? AND UserName = ?"
+                );
+                $sth->execute([$gameid,$username]);
+
+                // Remove requesting player's units from this game
+                // TODO: Check if this is already done by foreign key constraint
+                //       form units to playersgames table.
+                //       In the original structure there was no such constraint,
+                //       so this may be obsolete now that this constraint has been added.
+                $sth = $dbh->prepare(
+                   "DELETE FROM Units
+                    WHERE GameID = ? AND SeqNum = ?"
+                );
+                $sth->execute([$gameid, $seqNo]);
+
+                // Propagate leave-game update to other players
+                $sth = $dbh->prepare(
+                   "INSERT INTO Updates(GameID,Username,Action)
+                    SELECT GameID, Username, ? AS Action
+                    FROM   PlayersGames
+                    WHERE  GameID = ?"
+                );
+                $sth->execute([$removePlayerAction, $gameid]);
+
+                // Add informative message into game chat
+                $sth = $dbh->prepare(
+                   "INSERT INTO Messages(GameID, UserName, MessageText)
+                    VALUES              (?,      'System', ?      )"
+                );
+                $sth->execute([$gameid, $resignationMessage]);
+
+                // finish
+                $dbh->commit(); // -----------------------------
+            }
+            catch (Throwable $e) {
+                echo "failure";
+                $dbh->rollBack();
+                throw $e;
                 break;
             }
-            $msg           = $username . " has resigned";
-            $currentplayer = intVal($row[1]) === intVal($row[0]);
-            $seqNo         = $row[0];
-            $action        = json_encode(array(
-              'type'   => 'removePlayer',
-              'player' => intVal($seqNo)
-            ));
-
-            $dbh->beginTransaction(); // -----------------------------
-            $sth = $dbh->prepare(
-               "DELETE FROM PlayersGames
-                WHERE GameID = ? AND UserName = ?"
-            );
-            $sth->execute([$gameid,$username]);
-            $sth = $dbh->prepare(
-               "DELETE FROM Units
-                WHERE GameID = ? AND SeqNum = ?"
-            );
-            $sth->execute([$gameid, $seqNo]);
-            $sth = $dbh->prepare(
-               "UPDATE Players
-                SET    Defeats = Defeats + 1
-                WHERE  UserName = ?"
-            );
-            $sth->execute([$username]);
-            $sth = $dbh->prepare(
-               "INSERT INTO Updates(GameID,Username,Action)
-                SELECT GameID, Username, ? AS Action
-                FROM   PlayersGames
-                WHERE  GameID = ?"
-            );
-            $sth->execute([$action, $gameid]);
-            $sth = $dbh->prepare(
-               "INSERT INTO Messages(GameID, UserName, Message)
-                VALUES              (?,      'System', ?      )"
-            );
-            $sth->execute([$gameid, $msg]);
-            $dbh->commit(); // -----------------------------
-                      
+            
+            // TODO: Bring this inside the transaction.
+            //       Need to make the subroutine take an optional parameter
+            //       to not create a new DB transaction
+            //       (i.e. operate within this function's existing transaction)
             if ($currentplayer) {
                 endTurnOfPlayer($dbh,$seqNo,$gameid,$username);
             }
@@ -621,101 +642,137 @@ if (isset($_REQUEST['function'])) {
             break;
 
         case('gameover'):
+            // This needs to be called by the winning player
+            // in this function's current form
             $gameid   = $_POST['gameid'];
             $username = $_SESSION['username'];
-                        
-            $sth = $dbh->prepare(
-               "SELECT Team
-                FROM   PlayersGames
-                WHERE  GameID = ? AND UserName = ?"
-            );
-            $sth->execute([$gameid,$username]);
 
-            $row = $sth->fetch();
-            if (!$row){
-              echo json_encode("failure");
-              //error
-              break;
-            }
-            $team = $row[0];
-            $sth = $dbh->prepare(
-               "SELECT GameID
-                FROM   Games
-                WHERE  GameID = ? AND InProgress = true"
-            );
-            $sth->execute([$gameid]);
-
-            $row = $sth->fetch();
-            if (!$row){
-                echo json_encode("failure");
-                throw new Exception("No game #$gameid currently in progress");
-                break;
-            }
-            $sth = $dbh->prepare(
-               "SELECT UnitID
-                FROM   Units NATURAL JOIN PlayersGames
-                WHERE  GameID = ? AND Team <> ? AND Health <> 0"
-            );
-            $sth->execute([$gameid,$team]);
-
-            $row = $sth->fetch();
-            if (!$row){
-                echo json_encode("failure");
-                throw new Exception(
-                    "No units in game #$gameid not on team #$team"
+            // -----------------------------
+            // This needs to be up here to make sure
+            // we don't get any race conditions
+            $dbh->beginTransaction();
+            try {
+                // Retrieve our requester's team ID
+                $sth = $dbh->prepare(
+                   "SELECT Team
+                    FROM   PlayersGames
+                    WHERE  GameID = ? AND UserName = ?"
                 );
-                break;
-            }
-            $sth = $dbh->prepare(
-               "SELECT SeqNum
-                FROM   PlayersGames
-                WHERE  GameID = ? and Team = ?"
-            );
-            $sth->execute([$gameid,$team]);
+                $sth->execute([$gameid,$username]);
+                $row = $sth->fetch();
+                if (!$row){
+                    echo json_encode("failure");
+                    throw new Exception(
+                        "No PlayersGames entry found for player $username "
+                        . "in game $gameid"
+                    );
+                    break;
+                }
+                $requestingPlayersTeam = $row[0];
 
-            for ($i = 0; $row = $sth->fetch(); $i++) {
-                $players[$i] = intVal($row[0]);
-            }
-            $action = json_encode(array(
-              'type'    => 'gameOver',
-              'players' => $players
-            ));
+                // Check that the game we're checking is still in progress
+                // i.e. a valid target to end
+                $sth = $dbh->prepare(
+                   "SELECT GameID
+                    FROM   Games
+                    WHERE  GameID = ? AND InProgress = true"
+                );
+                $sth->execute([$gameid]);
+                $row = $sth->fetch();
+                if (!$row){
+                    echo json_encode("failure");
+                    throw new Exception("No game #$gameid currently in progress");
+                    break;
+                }
 
-            $dbh->beginTransaction(); // -----------------------------
-            $sth = $dbh->prepare(
-               "UPDATE Games
-                SET    InProgress = false
-                WHERE  GameID = ?"
-            );
-            $sth->execute([$gameid]);
-            $sth = $dbh->prepare(
-               "UPDATE Players
-                SET Wins = Wins + 1
-                WHERE UserName IN
-                   (SELECT UserName
+                // Find all units in the current game
+                // which are NOT on the requesting player's team
+                // i.e. find all enemy units
+                $sth = $dbh->prepare(
+                   "SELECT UnitID
+                    FROM   Units NATURAL JOIN PlayersGames
+                    WHERE  GameID = ? AND Team <> ? AND Health <> 0"
+                );
+                $sth->execute([$gameid,$requestingPlayersTeam]);
+                $row = $sth->fetch();
+                if ($row){
+                    // If there are any enemy units left alive,
+                    // we will not end the game
+                    // (we will wait for the winner to request
+                    //  the end of the game).
+                    echo json_encode("failure");
+                    throw new Exception("There are still enemy units alive");
+                    break;
+                }
+                // From this point on, we know the requester's team
+                // has won the game
+
+                // Get the player numbers of all the players
+                // on the requester's team (i.e. the winning team)
+                $sth = $dbh->prepare(
+                   "SELECT SeqNum
                     FROM   PlayersGames
-                    WHERE  GameID = ? AND Team = ?)"
-            );
-            $sth->execute([$gameid, $team]);
-            $sth = $dbh->prepare(
-               "UPDATE Players
-                SET    Defeats = Defeats + 1
-                WHERE  UserName NOT IN
-                   (SELECT UserName
-                    FROM   PlayersGames
-                    WHERE  GameID = ? AND Team = ?)"
-            );
-            $sth->execute([$gameid, $team]);
-            $sth = $dbh->prepare(
-               "INSERT INTO Updates(GameID, Username, Action)
-                SELECT GameID, Username, ? AS Action
-                FROM   PlayersGames
-                WHERE  GameID = ?"
-            );
-            $sth->execute([$action, $gameid]);
-            $dbh->commit(); // -----------------------------
+                    WHERE  GameID = ? and Team = ?"
+                );
+                $sth->execute([$gameid,$requestingPlayersTeam]);
+                // Create the gameOver event
+                // with the list of winners
+                for ($i = 0; $row = $sth->fetch(); $i++) {
+                    $players[$i] = intVal($row[0]);
+                }
+                $gameOverEvent = json_encode(array(
+                  'type'    => 'gameOver',
+                  'players' => $players
+                ));            
+            
+                // Stop the game
+                $sth = $dbh->prepare(
+                   "UPDATE Games
+                    SET    InProgress = false
+                    WHERE  GameID = ?"
+                );
+                $sth->execute([$gameid]);
 
-            echo json_encode("success");
+                // Update the win/loss scores
+                // of all the players in this game
+                $sth = $dbh->prepare(
+                   "UPDATE Players
+                    SET Wins = Wins + 1
+                    WHERE UserName IN
+                       (SELECT UserName
+                        FROM   PlayersGames
+                        WHERE  GameID = ? AND Team = ?)"
+                );
+                $sth->execute([$gameid, $requestingPlayersTeam]);
+                $sth = $dbh->prepare(
+                   "UPDATE Players
+                    SET    Defeats = Defeats + 1
+                    WHERE  UserName NOT IN
+                       (SELECT UserName
+                        FROM   PlayersGames
+                        WHERE  GameID = ? AND Team = ?)"
+                );
+                $sth->execute([$gameid, $requestingPlayersTeam]);
+
+                // Send the game over event to the players
+                $sth = $dbh->prepare(
+                   "INSERT INTO Updates(GameID, Username, Action)
+                    SELECT GameID, Username, ? AS Action
+                    FROM   PlayersGames
+                    WHERE  GameID = ?"
+                );
+                $sth->execute([$gameOverEvent, $gameid]);
+
+                // Finish
+                $dbh->commit();
+                echo json_encode("success");
+            }
+            catch (Throwable $e) {
+                $dbh->rollBack();
+                echo json_encode("failure");
+                throw $e;
+            }
+            // ----------------------------- end transaction
             break;
     }
 
