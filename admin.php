@@ -141,6 +141,7 @@ function initialise_database () {
         = array("TerrainType", "UnitType", "Maps", // 0 dependencies
                 "Terrain", "InitialUnits", "Games", // first-order dependencies
                 "Messages", "PlayersGames","Movement", // first-order dependencies cont.
+                "Attack", // first-order dependencies cont.
                 "Units", "Updates" // second-order dependencies
         );
     $table_data_import_functions_ordered
