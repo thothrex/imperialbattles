@@ -70,11 +70,12 @@ function export($string) {
     fclose($file);
 }
 
-function sqlresult_to_json($result, $fetchType = PDO::FETCH_BOTH) {
+function sql_result_to_json_array($result, $fetchType = PDO::FETCH_BOTH) {
     $rows = array();
     while($r = $result->fetch($fetchType)) {
         $rows[] = $r;
     }
+
     return json_encode($rows);
 }
 

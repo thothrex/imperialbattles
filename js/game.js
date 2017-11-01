@@ -36,8 +36,8 @@ function onPlayerFinish() {
     $.getJSON("updateStats.php",
         function(data){
             if (data != null) {
-                $("#winsLabel").text(data[0]);
-                $("#defeatsLabel").text(data[1]);
+                $("#winsLabel").text(data["Wins"]);
+                $("#defeatsLabel").text(data["Defeats"]);
             }
     });	
 }

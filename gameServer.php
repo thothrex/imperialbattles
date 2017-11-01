@@ -229,7 +229,7 @@ if (isset($_REQUEST['function'])) {
             );
             $sth->execute([$gameID,$username]);
 
-            echo sqlresult_to_json($sth, PDO::FETCH_ASSOC);
+            echo sql_result_to_json_array($sth, PDO::FETCH_ASSOC);
             clearUpdates($dbh, $gameID, $username);
             break;
 

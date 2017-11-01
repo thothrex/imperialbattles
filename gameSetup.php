@@ -29,7 +29,7 @@ if (isset($_REQUEST['function'])) {
                 FROM Maps"
             );
             $sth->execute();
-            echo sqlresult_to_json($sth);
+            echo sql_result_to_json_array($sth);
             break;
         
         case ('create'):
@@ -105,7 +105,7 @@ if (isset($_REQUEST['function'])) {
               ORDER BY SeqNum ASC"
             );
             $sth->execute([$gameID]);
-            $result = sqlresult_to_json($sth, PDO::FETCH_ASSOC);
+            $result = sql_result_to_json_array($sth, PDO::FETCH_ASSOC);
             echo $result;
             // DEBUG
             error_log("Created game, returned JSON $result");
@@ -168,7 +168,7 @@ if (isset($_REQUEST['function'])) {
                 ORDER BY SeqNum ASC"
             );
             $sth->execute([$gameID]);
-            echo sqlresult_to_json($sth);
+            echo sql_result_to_json_array($sth);
             break;
 
 	      case ('retrieve'):

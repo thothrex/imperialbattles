@@ -23,7 +23,7 @@ if (isset($_REQUEST['function'])) {
                 LIMIT 60"
             );
             $sth->execute([$gameID]);
-            echo sqlresult_to_json($sth);
+            echo sql_result_to_json_array($sth);
             break;
         
         case('update'):
@@ -48,7 +48,7 @@ if (isset($_REQUEST['function'])) {
                 $sth    = $db_server->prepare($query);
                 $sth->execute([$gameID]);
             }
-            echo sqlresult_to_json($sth);
+            echo sql_result_to_json_array($sth);
             break;
 
         case('send'):
