@@ -139,7 +139,8 @@ function initialise_database () {
     // due to foreign-key constraint dependencies
     $table_list_load_ordered
         = array("TerrainType", "UnitType", "Maps", // 0 dependencies
-                "Terrain", "InitialUnits", "Games", "Messages", "PlayersGames", // first-order dependencies
+                "Terrain", "InitialUnits", "Games", // first-order dependencies
+                "Messages", "PlayersGames","Movement", // first-order dependencies cont.
                 "Units", "Updates" // second-order dependencies
         );
     $table_data_import_functions_ordered
