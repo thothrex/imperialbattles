@@ -97,7 +97,7 @@ function displayMessages(messages){
         var parts = field.time.split(/[\s:-]+/);
         appendChat("<b>" + field.username 
                       + "(" + parts[3] + ":" + parts[4] + "): </b>"
-                      + field.message,field.username);                 
+                      + field.messageText,field.username);
         });
     if (scroll)
         moveScrollbarToBottom();
