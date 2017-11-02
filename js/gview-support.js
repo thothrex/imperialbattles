@@ -235,7 +235,7 @@ GView.Unit.prototype.setAnimation = function (name) {
             .setAnimation(anim)
             .fliph(anim.flipH)
             .flipv(anim.flipV)
-        .andSelf()
+        .addBack()
             .wh(anim.size[0], anim.size[1]);
 };
 

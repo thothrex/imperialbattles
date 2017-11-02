@@ -1,5 +1,13 @@
+// requires utility.js
+if (typeof getQueryStrings !== "function") {
+    throw "utility.js not included before game.js";
+}
 
 var loc = "game";
+var game = new Object();
+var htmlParameters = getQueryStrings();
+game.gameid = htmlParameters['gameid'];
+game.gamename = htmlParameters['gamename'];
 
 var model, view;
 
@@ -24,6 +32,10 @@ $(function () {
 
     model.startGame();
 });
+
+initialiseCurrentUserData();
+
+// --
 
 
 function onPlayerFinish() {
@@ -51,7 +63,6 @@ function showGameScreen(name) {
         });
     $("#chatScreen").fadeIn();
     moveChatWindow();
-    enableChatUpdate();
     $("#gameLabel").text(name);
 }
 
@@ -98,7 +109,12 @@ function confirmExit() {
     }
 }
 
-
-
-
-
+// TODO: deduplicate with lobby.js
+function initialiseCurrentUserData () {
+    $.get("getCurrentUserData.php", function(data) {
+        var winslossarray = $.parseJSON(data);
+        $("#winsLabel").append(winslossarray[0]);
+        $("#lossesLabel").append(winslossarray[1]);
+    });
+    $('#usernameLabel').append(Cookies.get('username'));
+}
