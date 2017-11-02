@@ -15,7 +15,7 @@ $db_server = db_connect();
 $result = $db_server->query($query);
 if ($result) {
     $query_result_json_array = sql_result_to_json_array($result);
-    $query_result_arry = json_decode($query_result_json_array);
+    $query_result_array = json_decode($query_result_json_array);
     if (count($query_result_array) == 1) {
       echo json_encode($query_result_array[0]);
     }
@@ -24,6 +24,7 @@ if ($result) {
       // TODO: log the failure on the client
       throw new Exception(
         "Unexpected query result: " . $query_result_json_array
+        . "\t(query count: " . count($query_result_array) . ")";
       );
     }
     $result->closeCursor();
