@@ -24,8 +24,7 @@ var popup = false;
 var kickingOut = false;
 var gamesList = new Array();
 
-
-window.onload = lobbyInitialise;
+$(document).ready(lobbyInitialise);
 
 function lobbyInitialise() {
     $.ajax({
@@ -595,7 +594,6 @@ function changeToGamePage (newGameID, gameName) {
 function showScreen() {
 	$("#gameSelectionScreen").fadeIn();
 	$("#logoutScreen").fadeIn();
-    $("#chatScreen").fadeIn();
 }
 
 function showGameSelectionScreen() {
@@ -634,13 +632,30 @@ function emptyContainer(container) {
 function appendGame(field) {
     var inprogress = (field.inprogress == databaseTrue) ? "IN PROGRESS" : "";
     $("#serverList").append(
-                "<div id='g" + field.gameid
-              +"' class='box' onclick=selectGame('g" + field.gameid + "','"
-              + field.inprogress + "')><img src='img/"+ field.mapname
-              + ".png' alt='map' height='60px' width='60px' style='float:left;'/><table class='property'><tr><th>Name: </th><td>" 
-              + field.gamename + "</td></tr><tr><th>Map:</th><td>" + field.mapname + "</td><td class='orange'> " 
-              + inprogress + "</td></tr><tr><th>Players:</th><td>" + field.noplayers + " / " 
-              + field.playerslimit + "</td></tr></table></div>");
+        "<div id='g" + field.gameid
+        + "' class='gameEntry row' onclick=selectGame('g" + field.gameid
+        + "','" + field.inprogress + "')>"
+            + "<div class='column flexcenter'>"
+                + "<img src='img/"+ field.mapname + ".png' alt='map' "
+                    +"height='60px' width='60px'/>"
+            + "</div>"
+            + "<div id='mapInfoGrid'>"
+                + "<p class='grid-row-1 grid-col-1'>Name: </p>"
+                + "<p class='grid-row-1 grid-col-2'>"
+                    + field.gamename + "</p>"
+                + "<p class='grid-row-2 grid-col-1'>Map: </p>"
+                + "<p class='grid-row-2 grid-col-2'>"
+                    + field.mapname + "</p>"
+                + "<p class='grid-row-3 grid-col-1'>Players: </p>"
+                + "<p class='grid-row-3 grid-col-2'>"
+                    + field.noplayers + " / " + field.playerslimit
+                + "</p>"
+            + "</div>"
+            + "<div class='column flexcenter'>"
+                + "<p class='orange'> " + inprogress + "</p>"
+            + "</div>"
+        + "</div>"
+    );
     // TODO: make load data into javascript array properly
 
 }

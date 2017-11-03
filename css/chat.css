@@ -1,26 +1,26 @@
 #chatScreen
 {
-    position:absolute; 
-    top:10%; 
-    left:8%;
-    width:50%; 
-    height:100%;
-    display:none;
+    flex-grow: 1;
+}
+
+#chatLabel
+{
+    flex: none;
 }
 
 #chat-area                      
-{ 
-    top: 8%;
-    left: 9%;
-    width: 80%; 
-    position: absolute;
-    height: 65%; 
+{
+    flex: auto;
     overflow: auto; 
-    border: 5px groove; 
-    padding: 2px; 
+    border: 5px groove;
     background: black; 
     text-align: left;
     vertical-align: bottom;
+}
+
+form#messageForm
+{
+    flex: none;
 }
 
 #chat-area p.normal                    
@@ -38,15 +38,9 @@ p.red
 }
 
 #msg                        
-{ 
-    position:absolute;
-    left:9%;
-    top: 74%;
-    width:80%;
+{
     height:40px;
-    border: 5px inset; 
-    padding: 2px; 
-    font: 12px "Lucida Grande", Sans-Serif; 
-    resize:none;
+    border: 5px inset;
+    font: 12px "Lucida Grande", Sans-Serif;
 }
 

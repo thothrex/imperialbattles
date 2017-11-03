@@ -22,6 +22,7 @@
     <link rel="stylesheet" type="text/css" href="css/chat.css" />
     <link rel="stylesheet" type="text/css" href="css/game.css" />
     <link rel="stylesheet" href="css/gview.css">
+    <link rel="stylesheet" type="text/css" href="css/flex.css" />
     
     <noscript>
         This page requires JavaScript. You can either switch to a browser that supports
@@ -29,32 +30,35 @@
     </noscript>
 </head>
 
-<body onload="showGameScreen(game.gamename)">
-    <div id="page">
-        <div id="logoutScreen">
-            <span id='usernameLabel'></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span id='winsLabel'>W: </span>&nbsp;&nbsp;&nbsp;
-            <span id='lossesLabel'>L: </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <button type="button" onclick="logout()">Logout</button>
+<body>
+    <div id="page" class="column">
+        <div id="topBar" class="row">
+            <div id="logoutScreen">
+                <span id='usernameLabel'></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <span id='winsLabel'>W: </span>&nbsp;&nbsp;&nbsp;
+                <span id='lossesLabel'>L: </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <button type="button" onclick="logout()">Logout</button>
+            </div>
         </div>
-        
-        <div id="chatContainer">
-            <script> $("#chatContainer").load('chat.html'); </script>
+        <div class="row" id="gameRow">
+            <div id="chatContainer">
+                <script> $("#chatContainer").load('chat.html'); </script>
+            </div>
+            <div id="gameScreen">
+                <h2 id="gameLabel" class="yellow"></h2>
+                <div id="playground"></div>
+            </div>
         </div>
-
-        <div id ="buttons2">
-            <button class="green" type="button" onclick="resign()" id="resignButton">
-                Resign
-            </button>
-            &nbsp;&nbsp;&nbsp;
-            <button class="green" type="button" onclick="returnToLobby()">
-                Back to Home
-            </button>
-        </div>
-
-        <div id = "gameScreen">
-            <h2 id="gameLabel" class="yellow"></h2>
-            <div id="playground"></div>
+        <div id="bottomBar" class="row">
+            <div id ="buttons2">
+                <button class="green" type="button" onclick="resign()" id="resignButton">
+                    Resign
+                </button>
+                &nbsp;&nbsp;&nbsp;
+                <button class="green" type="button" onclick="returnToLobby()">
+                    Back to Home
+                </button>
+            </div>
         </div>
     </div>
 </body>

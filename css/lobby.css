@@ -1,18 +1,11 @@
-html 
+body
 {
-    min-height:100%;
+    text-align:center;
     background: url('../img/bg.jpg') no-repeat center center fixed; 
     -webkit-background-size: cover;
     -moz-background-size: cover;
     -o-background-size: cover;
     background-size: cover;
-}
-
-body
-{
-    text-align:center;
-    min-height:100%;
-    background-color: rgba(0,0,0,0);
 }
 
 .yellow
@@ -31,10 +24,46 @@ body
     text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
 }
 
+#page
+{
+    flex: auto;
+}
+
+#topBar
+{
+    justify-content: flex-end;
+    flex: auto;
+    padding-bottom: 10px;
+}
+
+#logoutScreen
+{
+    border:2px solid black;
+    color:yellow;
+    font-variant:small-caps;
+    font-weight:bold;
+    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+    padding: 5px 10px;
+    background-color:#965912;
+    display:none;
+}
+
+div.spacer
+{
+    flex-grow: 1;
+}
+
+div.uniformColumn
+{
+    flex-grow: 1;
+}
+
+#headerMenu
+{
+}
+
 table.property
 {
-	position:relative;
-	top:-6px;
 }
 
 table.property  tr
@@ -55,70 +84,31 @@ div.box
 	height:60px;
 }
 
-#page
+div.gameEntry
 {
-    position:relative;
-    margin:0 auto;
-    width:1600px;
-    height:800px;
+    justify-content: center;
 }
 
-#gameSelectionScreen
+div#mainRow
 {
-    display:none;
-	position:absolute;
-	top:10%;
-	right:10%;
+    justify-content: space-around;
 }
 
-#logoutScreen
+div#gameSelectionButtonRow
 {
-    position:absolute;
-    right:15%;
-    border:2px solid black;
-    color:yellow;
-    font-variant:small-caps;
-    font-weight:bold;
-    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
-    padding: 5px 10px;
-    background-color:#965912;
-	display:none;
+    padding-top: 5px;
+    justify-content: space-evenly;
+    flex: none;
 }
 
-#serverBrowser
+div#onlinePlayers
 {
-    position:absolute;
-	right:20%;
-	top:10%;
-}
-
-#serverList 
-{
-	overflow:auto;
-	height:500px;
-	width:500px;
-	border:2px solid black;
-	color:white;
-	font-weight:bold;
-    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
-}
-
-#gameSetupScreen
-{
-    display:none;
-}
-
-#onlinePlayers
-{
-    position: absolute;
-    height: 70%; 
-    top: 19%;
-    left: 1%;
-    width: 7%; 
-    overflow: auto; 
-    border: 5px groove; 
-    padding: 2px; 
-    background: #8ea; 
+    flex-grow: 1;
+    max-width: 200px;
+    overflow: auto;
+    border: 5px groove;
+    padding: 2px;
+    background: #8ea;
     font-weight:bold;
 }
 
@@ -127,15 +117,71 @@ div.box
     text-align:left;
 }
 
+div#chatContainer
+{
+    flex-grow: 2;
+    max-width: 800px;
+}
+
+div#gameSelectionScreen
+{
+    display:none;
+    flex-grow: 2;
+    max-width: 375px;
+}
+
+#serverBrowser
+{
+    height: 800px;
+}
+
+div#serverBrowser h2
+{
+    flex: none;
+}
+
+form#serverForm
+{
+    flex-grow: 1;
+}
+
+#serverList 
+{
+    flex-grow: 1;
+    border:2px solid black;
+    color:white;
+    font-weight: bold;
+    text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+}
+
+div#mapInfoGrid
+{
+    display: grid;
+    grid-column-gap: 5px;
+}
+
+div.gameEntry p
+{
+    margin: 0px;
+    text-align: left;
+}
+
+div.gameEntry div
+{
+    padding: 5px;
+}
+
+
+
+#gameSetupScreen
+{
+    display:none;
+}
+
 #gameOptions
 {
-    position:absolute;
-    top:10%;
-    left:5%;
-    width: 60%;
-    height: 58%; 
-  background-image: -moz-radial-gradient(center, circle farthest-side, #96EE9A 0%, rgba(256,256,256, 0.5) 100%);
-background-image: -webkit-gradient(radial, center center, 0, center center, 487, color-stop(0, #96EE9A), color-stop(1, rgba(256,256,256, 0.5)));
+    background-image: -moz-radial-gradient(center, circle farthest-side, #96EE9A 0%, rgba(256,256,256, 0.5) 100%);
+    background-image: -webkit-gradient(radial, center center, 0, center center, 487, color-stop(0, #96EE9A), color-stop(1, rgba(256,256,256, 0.5)));
     font-weight:bold;
 }
 
@@ -151,31 +197,15 @@ background-image: -webkit-gradient(radial, center center, 0, center center, 487,
 
 #mapPreview
 {
-    position:absolute;
-    top:10%;
-    left:65%;
-    width: 30%;
-    height: 80%;
 }
 
 #mapImage
 {
-    margin:4%;
-    width: 90%;
-    height: 65%;
     border:5px groove;
     border-radius:10px;
     box-shadow: 10px 10px 5px #777;
     background-position:center center;
     background-size:cover;
-}
-
-#headerMenu
-{
-    position:absolute;
-    right:40%;
-    border:2px solid black;
-  
 }
 
 .green

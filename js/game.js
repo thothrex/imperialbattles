@@ -11,6 +11,9 @@ game.gamename = htmlParameters['gamename'];
 
 var model, view;
 
+$(document).ready($(function () {showGameScreen(game.gamename)}));
+$(document).ready(initialiseCurrentUserData);
+
 $(function () {
     model = new Model(
         game.gameid
@@ -33,8 +36,6 @@ $(function () {
     model.startGame();
 });
 
-initialiseCurrentUserData();
-
 // --
 
 
@@ -54,25 +55,14 @@ function onPlayerFinish() {
     });	
 }
 
-
 function showGameScreen(name) {
+    // TODO: why is this onlinePlayers thing here?
     $.ajax({
          type: "GET",
          url: "onlinePlayers.php",
          data: {'function':'add'}
         });
-    $("#chatScreen").fadeIn();
-    moveChatWindow();
     $("#gameLabel").text(name);
-}
-
-
-
-function moveChatWindow() {
-    $("#chatScreen").css("top","5%");
-    $("#chatScreen").css("left","5%");
-    $("#chatScreen").css("width","30%");
-    $("#chatScreen").css("height","100%");
 }
 
 function resign() {
