@@ -1,4 +1,4 @@
-html 
+body
 {
     text-align:center;
     background: url('../img/bg_compressed.png') no-repeat center center fixed;
@@ -6,12 +6,6 @@ html
     -moz-background-size: cover;
     -o-background-size: cover;
     background-size: cover;
-}
-
-body
-{
-    text-align:center;
-    min-height:100%;
 }
 
 .yellow
@@ -32,50 +26,58 @@ body
 
 #page
 {
-    position:relative;
-    margin:0 auto;
-    width:1600px;
-    height:800px;
+}
+
+#topBar
+{
+    justify-content: flex-end;
 }
 
 #logoutScreen
 {
-    position:absolute;
-    right:15%;
+    flex: auto;
+    max-width: 300px;
     border:2px solid black;
     color:yellow;
     font-variant:small-caps;
     font-weight:bold;
     text-shadow: -1px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
-    padding: 5px 10px;
     background-color:#965912;
 }
 
+#gameRow
+{
+    justify-content: center;
+}
+
+#chatContainer
+{
+    display: flex;
+    margin-right: 10px;
+}
 
 #gameScreen
 {
-  position: absolute;
-  top:5%;
-  left: 40%;
+    flex: none;
+    width: 800px;
+    height: 800px;
 }
-
-#buttons2
-{
-    position: absolute;
-    top: 93%;
-    left: 14%;
-} 
 
 #playground 
 {
     background: #fff;
     border: 1px solid #000;
-    margin: auto;
 }
+
+
+#bottomBar
+{
+    justify-content: center;
+} 
 
 .green
 {
- background:#96EE9A;
+    background:#96EE9A;
 	padding:8px 13px;
 	text-shadow: -1px 0 #fff, 0 1px #fff, 1px 0 #fff, 0 -1px #fff;
 	color:#000;
@@ -90,7 +92,7 @@ body
 }
 
 #gameLabel {
-    height:21px;
+    height: 30px;
 }
 
 

@@ -1,6 +1,7 @@
 <script src="js/chat.js"></script>
+<!-- assumes existence of flex.css -->
 
-<div id="chatScreen">
+<div id="chatScreen" class="column">
     <h2 id="chatLabel" class="yellow">Chat Room</h2>
     <div id="chat-area"></div>
     <form id="messageForm">
@@ -9,3 +10,5 @@
         </textarea>
     </form>
 </div>
+
+<script>enableChatUpdate();</script>

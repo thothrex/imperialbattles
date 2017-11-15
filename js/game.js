@@ -1,7 +1,18 @@
+// requires utility.js
+if (typeof getQueryStrings !== "function") {
+    throw "utility.js not included before game.js";
+}
 
 var loc = "game";
+var game = new Object();
+var htmlParameters = getQueryStrings();
+game.gameid = htmlParameters['gameid'];
+game.gamename = htmlParameters['gamename'];
 
 var model, view;
+
+$(document).ready($(function () {showGameScreen(game.gamename)}));
+$(document).ready(initialiseCurrentUserData);
 
 $(function () {
     model = new Model(
@@ -25,6 +36,8 @@ $(function () {
     model.startGame();
 });
 
+// --
+
 
 function onPlayerFinish() {
     // Disable resign button.
@@ -42,26 +55,14 @@ function onPlayerFinish() {
     });	
 }
 
-
 function showGameScreen(name) {
+    // TODO: why is this onlinePlayers thing here?
     $.ajax({
          type: "GET",
          url: "onlinePlayers.php",
          data: {'function':'add'}
         });
-    $("#chatScreen").fadeIn();
-    moveChatWindow();
-    enableChatUpdate();
     $("#gameLabel").text(name);
-}
-
-
-
-function moveChatWindow() {
-    $("#chatScreen").css("top","5%");
-    $("#chatScreen").css("left","5%");
-    $("#chatScreen").css("width","30%");
-    $("#chatScreen").css("height","100%");
 }
 
 function resign() {
@@ -98,7 +99,12 @@ function confirmExit() {
     }
 }
 
-
-
-
-
+// TODO: deduplicate with lobby.js
+function initialiseCurrentUserData () {
+    $.get("getCurrentUserData.php", function(data) {
+        var winslossarray = $.parseJSON(data);
+        $("#winsLabel").append(winslossarray[0]);
+        $("#lossesLabel").append(winslossarray[1]);
+    });
+    $('#usernameLabel').append(Cookies.get('username'));
+}

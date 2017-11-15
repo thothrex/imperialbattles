@@ -130,6 +130,11 @@ function register() {
         function(data) {
             if (data.match("true")) {
                 location.reload();
+                // TODO:   Need to verify if this is safe.
+                //         I don't care right now because
+                //       this is just a demo system.
+                //         The data used here ought to be super fake.
+                Cookies.set('username', user);
             } else {
                 $("#registerStatusLabel").text("Username '" + user + "' already exists.");
             }

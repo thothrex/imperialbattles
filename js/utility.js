@@ -113,3 +113,25 @@ Trigger.prototype.trigger = function (event) {
     if (!this.listeners[event].length) console.log(
         'Warning: no listeners for event ' + event + '.');
 }
+
+//*******************************************************************************
+// Courtesy of codeling (https://stackoverflow.com/users/671366/codeling)
+// via https://stackoverflow.com/questions/2907482/how-to-get-the-query-string-by-javascript
+//
+// Extracts the query string section of an HTML page
+// e.g. game.html?gameid=42 returns { gameid: 42 }
+function getQueryStrings() {
+  var assoc  = {};
+  var decode = function (s) { return decodeURIComponent(s.replace(/\+/g, " ")); };
+  var queryString = location.search.substring(1);
+  var keyValues = queryString.split('&');
+
+  for(var i in keyValues) {
+    var key = keyValues[i].split('=');
+    if (key.length > 1) {
+      assoc[decode(key[0])] = decode(key[1]);
+    }
+  }
+
+  return assoc;
+}

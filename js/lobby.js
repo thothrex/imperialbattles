@@ -2,6 +2,8 @@
 
 /* MODEL */
 var SERVER_DUPLICATE_RESPONSE = 'duplicate';
+var GAMEPLAY_PAGE_URL = 'game.html';
+var databaseTrue = '1';
 
 var playername;
 var map;
@@ -20,10 +22,9 @@ var lastUpdated; //ISO datetime string
 var loc = "lobby";
 var popup = false;
 var kickingOut = false;
+var gamesList = new Array();
 
-var databaseTrue = '1';
-
-window.onload = lobbyInitialise;
+$(document).ready(lobbyInitialise);
 
 function lobbyInitialise() {
     $.ajax({
@@ -42,6 +43,7 @@ function lobbyInitialise() {
 
 }
 
+// TODO: deduplicate with game.js
 function initialiseCurrentUserData () {
     $.get("getCurrentUserData.php", function(data) {
         var winslossarray = $.parseJSON(data);
@@ -128,6 +130,13 @@ function updateGameBrowser() {
             emptyContainer('serverList');
             $.each(result, function(i, field){
                 appendGame(field);
+                // TODO: do this properly
+                //       requires complete codebase overhaul though...
+                if (gamesList[field.gameid] === undefined
+                || gamesList[field.gameid] === null) {
+                    gamesList[field.gameid] = new Object();
+                }
+                gamesList[field.gameid].gamename = field.gamename;
             }); 
             showSelectedGame();
         }
@@ -176,18 +185,9 @@ function updateGameSetup() {
             if (result.length > 0) {
                 setMapGamePlayers(result);
                 if (game.inprogress == databaseTrue) {
-                    $.post("gameSetup.php",
-                        {
-                            'function': 'begin'
-                        },
-                        function(data) {
-                            loc = "game";
-                            document.forms["startGameForm"]["gameid"].value = game.gameid;
-                            $("#startGameForm").submit();
-                        });
+                    changeToGamePage(game.gameid, game.gamename);
                 }
-
-                if(isStillInGame()){
+                else if(isStillInGame()){
                     lastUpdated = result[0].lastupdated;
                     updateSetupView();
                 }
@@ -299,9 +299,7 @@ function startGame() {
         },
         function(data) {
             if ( data.match("success") ) { //deliberate - errors otherwise
-                loc = "game";
-                document.forms["startGameForm"]["gameid"].value = game.gameid;
-                $("#startGameForm").submit();
+                changeToGamePage(game.gameid, game.gamename);
             }
             else {
                 alert("unable to start game: " + data);
@@ -436,9 +434,9 @@ function isStillInGame(){
 function resumeGame() {
     if (!popup) {
         loc = "game";
-        document.forms["startGameForm"]["gameid"].value = 
-            (document.forms["serverForm"]["server"].value).substring(1);
-        $("#startGameForm").submit();
+        var gameid
+            = (document.forms["serverForm"]["server"].value).substring(1);
+        changeToGamePage(gameid, gamesList[gameid].gamename);
     }
 }
 
@@ -553,6 +551,19 @@ function clearGamePlayer() {
     }
 }
 
+function changeToGamePage (newGameID, gameName) {
+    if (newGameID === undefined || newGameID === null) {
+        throw "cannot changeToGamePage with undefined/null gameID";
+    }
+    if (gameName === undefined || gameName === null) {
+        throw "cannot changeToGamePage with undefined/null gamename";
+    }
+    loc = "game";
+    document.location.href
+        = GAMEPLAY_PAGE_URL + '?gameid=' + newGameID
+        + '&gamename=' + gameName;
+}
+
 
 
 
@@ -583,7 +594,6 @@ function clearGamePlayer() {
 function showScreen() {
 	$("#gameSelectionScreen").fadeIn();
 	$("#logoutScreen").fadeIn();
-    $("#chatScreen").fadeIn();
 }
 
 function showGameSelectionScreen() {
@@ -622,13 +632,32 @@ function emptyContainer(container) {
 function appendGame(field) {
     var inprogress = (field.inprogress == databaseTrue) ? "IN PROGRESS" : "";
     $("#serverList").append(
-                "<div id='g" + field.gameid
-              +"' class='box' onclick=selectGame('g" + field.gameid + "','"
-              + field.inprogress + "')><img src='img/"+ field.mapname
-              + ".png' alt='map' height='60px' width='60px' style='float:left;'/><table class='property'><tr><th>Name: </th><td>" 
-              + field.gamename + "</td></tr><tr><th>Map:</th><td>" + field.mapname + "</td><td class='orange'> " 
-              + inprogress + "</td></tr><tr><th>Players:</th><td>" + field.noplayers + " / " 
-              + field.playerslimit + "</td></tr></table></div>");
+        "<div id='g" + field.gameid
+        + "' class='gameEntry row' onclick=selectGame('g" + field.gameid
+        + "','" + field.inprogress + "')>"
+            + "<div class='column flexcenter'>"
+                + "<img src='img/"+ field.mapname + ".png' alt='map' "
+                    +"height='60px' width='60px'/>"
+            + "</div>"
+            + "<div id='mapInfoGrid'>"
+                + "<p class='grid-row-1 grid-col-1'>Name: </p>"
+                + "<p class='grid-row-1 grid-col-2'>"
+                    + field.gamename + "</p>"
+                + "<p class='grid-row-2 grid-col-1'>Map: </p>"
+                + "<p class='grid-row-2 grid-col-2'>"
+                    + field.mapname + "</p>"
+                + "<p class='grid-row-3 grid-col-1'>Players: </p>"
+                + "<p class='grid-row-3 grid-col-2'>"
+                    + field.noplayers + " / " + field.playerslimit
+                + "</p>"
+            + "</div>"
+            + "<div class='column flexcenter'>"
+                + "<p class='orange'> " + inprogress + "</p>"
+            + "</div>"
+        + "</div>"
+    );
+    // TODO: make load data into javascript array properly
+
 }
 
 function showSelectedGame() {
