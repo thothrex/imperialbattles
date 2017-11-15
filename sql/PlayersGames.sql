@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS `PlayersGames` (
   `SeqNum` smallint unsigned,
   `Team` smallint unsigned,
   `Ready` boolean,
+  `Alive` boolean NOT NULL DEFAULT TRUE,
   PRIMARY KEY (`GameID`, `UserName`),
   UNIQUE INDEX(`GameID`, `SeqNum`),
   FOREIGN KEY (GameID)
