@@ -1,8 +1,4 @@
-<?php
-session_save_path("session");
-ini_set('session.gc_maxlifetime', 24 * 60 * 60);
-session_start();
-date_default_timezone_set('Europe/London');
+<?php session_start();
 set_error_handler("php_sql_error");
 set_exception_handler("exceptionHandler");
 /* Creates a connection to the MySQL server. */

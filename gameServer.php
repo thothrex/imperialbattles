@@ -1,5 +1,4 @@
-<?php
-require_once('config.php');
+<?php require_once 'config.php';
 require_once('time.php');
 // requires DBH to be throwing exceptions on error
 
